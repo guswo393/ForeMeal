@@ -27,4 +27,9 @@ public class MealLogController {
     public List<MealLogDto.Response> getDaily(@RequestParam Long userId, @RequestParam String date) {
         return mealLogService.getDaily(userId, LocalDate.parse(date));
     }
+
+    @GetMapping("/daily-summary")
+    public MealLogDto.DailySummaryResponse getDailySummary(@RequestParam Long userId, @RequestParam String date) {
+        return mealLogService.getDailySummary(userId, LocalDate.parse(date));
+    }
 }
