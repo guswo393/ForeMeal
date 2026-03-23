@@ -42,6 +42,24 @@ public class UserDto {
     ) {
     }
 
+    public record LoginRequest(
+            @Email
+            @NotBlank
+            String email,
+
+            @NotBlank
+            @Size(min = 4, max = 255)
+            String password
+    ) {
+    }
+
+    public record LoginResponse(
+            Long userId,
+            String email,
+            String username
+    ) {
+    }
+
     public record Response(
             Long userId,
             String email,

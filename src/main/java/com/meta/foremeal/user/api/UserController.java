@@ -20,6 +20,11 @@ public class UserController {
         return userService.create(request);
     }
 
+    @PostMapping("/login")
+    public UserDto.LoginResponse login(@RequestBody @Valid UserDto.LoginRequest request) {
+        return userService.login(request);
+    }
+
     @GetMapping("/{userId}")
     public UserDto.Response getById(@PathVariable Long userId) {
         return userService.getById(userId);
