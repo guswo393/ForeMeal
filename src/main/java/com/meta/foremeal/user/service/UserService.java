@@ -2,6 +2,8 @@ package com.meta.foremeal.user.service;
 
 import com.meta.foremeal.user.domain.User;
 import com.meta.foremeal.user.dto.UserDto;
+import com.meta.foremeal.user.exception.DuplicateEmailException;
+import com.meta.foremeal.user.exception.UserNotFoundException;
 import com.meta.foremeal.user.repo.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +20,7 @@ public class UserService {
 
     public UserDto.Response create(UserDto.CreateRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+            throw new DuplicateEmailException(request.email());
         }
 
         User user = new User(
@@ -51,7 +53,7 @@ public class UserService {
 
     private User findUser(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserNotFoundException(userId));
     }
 
     private UserDto.Response toResponse(User user) {
