@@ -4,6 +4,7 @@ import com.meta.foremeal.user.domain.User;
 import com.meta.foremeal.user.dto.AuthDto;
 import com.meta.foremeal.user.exception.InvalidLoginException;
 import com.meta.foremeal.user.repo.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,16 +13,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthService(UserRepository userRepository) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public AuthDto.LoginResponse login(AuthDto.LoginRequest request) {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(InvalidLoginException::new);
 
-        if (!user.getPassword().equals(request.password())) {
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new InvalidLoginException();
         }
 

@@ -6,6 +6,7 @@ import com.meta.foremeal.user.dto.UserDto;
 import com.meta.foremeal.user.exception.DuplicateEmailException;
 import com.meta.foremeal.user.exception.UserNotFoundException;
 import com.meta.foremeal.user.repo.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,9 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public UserDto.Response create(UserDto.CreateRequest request) {
@@ -24,9 +27,11 @@ public class UserService {
             throw new DuplicateEmailException(request.email());
         }
 
+        String encodedPassword = passwordEncoder.encode(request.password());
+
         User user = new User(
                 request.email(),
-                request.password(),
+                encodedPassword,
                 request.username(),
                 request.birthYear(),
                 UserRole.USER
@@ -50,7 +55,7 @@ public class UserService {
 
     public void changePassword(Long userId, UserDto.ChangePasswordRequest request) {
         User user = findUser(userId);
-        user.changePassword(request.password());
+        user.changePassword(passwordEncoder.encode(request.password()));
     }
 
     private User findUser(Long userId) {
