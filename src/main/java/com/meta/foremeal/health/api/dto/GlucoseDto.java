@@ -1,31 +1,30 @@
 package com.meta.foremeal.health.api.dto;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import com.meta.foremeal.health.domain.GlucoseMeasureType;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class BloodPressureDto {
+public class GlucoseDto {
 
     public record CreateRequest(
             @NotNull LocalDateTime measuredAt,
-            @NotNull @Min(1) @Max(300) Integer systolic,
-            @NotNull @Min(1) @Max(200) Integer diastolic,
-            @Min(1) @Max(250) Integer pulse,
+            @NotNull @DecimalMin(value = "0.0", inclusive = false) BigDecimal glucoseValue,
+            @NotNull GlucoseMeasureType measureType,
             @Size(max = 1000) String memo
     ) {
     }
 
     public record Response(
-            Long bloodPressureId,
+            Long glucoseId,
             Long userId,
             LocalDateTime measuredAt,
-            Integer systolic,
-            Integer diastolic,
-            Integer pulse,
+            BigDecimal glucoseValue,
+            GlucoseMeasureType measureType,
             String memo
     ) {
     }
