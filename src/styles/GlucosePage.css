@@ -1,0 +1,90 @@
+/* 전체 페이지 */
+.glucose-page {
+  padding: 20px;
+  background-color: #f5f7fb;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* 카드 */
+.glucose-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* 제목 */
+.glucose-card h2,
+.glucose-card h3 {
+  margin-bottom: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 입력창 */
+.glucose-input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s;
+}
+
+/* 입력 포커스 */
+.glucose-input:focus {
+  border-color: #4a90e2;
+}
+
+/* number 스피너 제거 */
+.glucose-input[type="number"]::-webkit-outer-spin-button,
+.glucose-input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.glucose-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* 버튼 */
+.glucose-btn {
+  width: 100%;
+  padding: 12px;
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+/* 버튼 hover */
+.glucose-btn:hover {
+  background: #357abd;
+}
+
+/* 기록 리스트 */
+.glucose-record {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+  color: #444;
+}
+
+/* 마지막 줄 border 제거 */
+.glucose-record:last-child {
+  border-bottom: none;
+}
+
+/* 빈 상태 */
+.empty-text {
+  color: #999;
+  font-size: 14px;
+}
