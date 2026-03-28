@@ -1,5 +1,6 @@
 package com.meta.foremeal.global.exception;
 
+import com.meta.foremeal.health.exception.HealthProfileNotFoundException;
 import com.meta.foremeal.user.exception.DuplicateEmailException;
 import com.meta.foremeal.user.exception.InvalidLoginException;
 import com.meta.foremeal.user.exception.UserNotFoundException;
@@ -34,6 +35,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.of("INVALID_LOGIN", e.getMessage()));
+    }
+
+    @ExceptionHandler(HealthProfileNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleHealthProfileNotFound(HealthProfileNotFoundException e) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of("HEALTH_PROFILE_NOT_FOUND", e.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
