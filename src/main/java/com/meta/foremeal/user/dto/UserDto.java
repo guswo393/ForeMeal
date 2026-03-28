@@ -1,4 +1,4 @@
-package com.meta.foremeal.user.dto;
+package com.meta.foremeal.user.api.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -39,24 +39,6 @@ public class UserDto {
             @NotBlank
             @Size(min = 4, max = 255)
             String password
-    ) {
-    }
-
-    public record LoginRequest(
-            @Email
-            @NotBlank
-            String email,
-
-            @NotBlank
-            @Size(min = 4, max = 255)
-            String password
-    ) {
-    }
-
-    public record LoginResponse(
-            Long userId,
-            String email,
-            String username
     ) {
     }
 

@@ -1,6 +1,6 @@
 package com.meta.foremeal.user.api;
 
-import com.meta.foremeal.user.dto.UserDto;
+import com.meta.foremeal.user.api.dto.UserDto;
 import com.meta.foremeal.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -18,11 +18,6 @@ public class UserController {
     @PostMapping
     public UserDto.Response create(@RequestBody @Valid UserDto.CreateRequest request) {
         return userService.create(request);
-    }
-
-    @PostMapping("/login")
-    public UserDto.LoginResponse login(@RequestBody @Valid UserDto.LoginRequest request) {
-        return userService.login(request);
     }
 
     @GetMapping("/{userId}")

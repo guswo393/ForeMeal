@@ -23,14 +23,19 @@ public class User {
     @Column(name = "birth_year")
     private Integer birthYear;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 20)
+    private UserRole role;
+
     protected User() {
     }
 
-    public User(String email, String password, String username, Integer birthYear) {
+    public User(String email, String password, String username, Integer birthYear, UserRole role) {
         this.email = email;
         this.password = password;
         this.username = username;
         this.birthYear = birthYear;
+        this.role = role;
     }
 
     public Long getUserId() {
@@ -53,6 +58,10 @@ public class User {
         return birthYear;
     }
 
+    public UserRole getRole() {
+        return role;
+    }
+
     public void update(String username, Integer birthYear) {
         this.username = username;
         this.birthYear = birthYear;
@@ -60,5 +69,9 @@ public class User {
 
     public void changePassword(String password) {
         this.password = password;
+    }
+
+    public void changeRole(UserRole role) {
+        this.role = role;
     }
 }
