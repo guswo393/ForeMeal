@@ -19,7 +19,6 @@ public class MealLogDto {
     ) {}
 
     public record CreateRequest(
-            @NotNull Long userId,
             @NotNull LocalDateTime eatenAt,
             String notes,
             @NotNull MealSource source,

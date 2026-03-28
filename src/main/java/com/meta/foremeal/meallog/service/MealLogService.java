@@ -27,9 +27,9 @@ public class MealLogService {
     }
 
     @Transactional
-    public MealLogDto.Response create(MealLogDto.CreateRequest req) {
+    public MealLogDto.Response create(Long loginUserId, MealLogDto.CreateRequest req) {
         MealLog mealLog = new MealLog(
-                req.userId(),
+                loginUserId,
                 req.eatenAt(),
                 req.notes(),
                 req.source(),
@@ -38,7 +38,7 @@ public class MealLogService {
 
         for (MealLogDto.ItemRequest it : req.items()) {
             MealLogItem item = new MealLogItem(
-                    req.userId(),
+                    loginUserId,
                     it.foodId(),
                     it.foodName(),
                     it.quantity(),
@@ -51,8 +51,8 @@ public class MealLogService {
 
         LocalDate date = req.eatenAt().toLocalDate();
         DailyIntakeSummary summary = summaryRepository
-                .findByUserIdAndSummaryDate(req.userId(), date)
-                .orElseGet(() -> summaryRepository.save(new DailyIntakeSummary(req.userId(), date)));
+                .findByUserIdAndSummaryDate(loginUserId, date)
+                .orElseGet(() -> summaryRepository.save(new DailyIntakeSummary(loginUserId, date)));
 
         Nutrients nutrients = calculateNutrients(saved.getItems());
         summary.add(nutrients.calories, nutrients.sodium, nutrients.sugar, nutrients.carbs);
@@ -61,24 +61,24 @@ public class MealLogService {
     }
 
     @Transactional(readOnly = true)
-    public List<MealLogDto.Response> getDaily(Long userId, LocalDate date) {
+    public List<MealLogDto.Response> getDaily(Long loginUserId, LocalDate date) {
         LocalDateTime from = date.atStartOfDay();
         LocalDateTime to = date.plusDays(1).atStartOfDay();
 
-        return mealLogRepository.findByUserIdAndEatenAtBetweenOrderByEatenAtAsc(userId, from, to)
+        return mealLogRepository.findByUserIdAndEatenAtBetweenOrderByEatenAtAsc(loginUserId, from, to)
                 .stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public MealLogDto.DailySummaryResponse getDailySummary(Long userId, LocalDate date) {
+    public MealLogDto.DailySummaryResponse getDailySummary(Long loginUserId, LocalDate date) {
         DailyIntakeSummary s = summaryRepository
-                .findByUserIdAndSummaryDate(userId, date)
-                .orElseGet(() -> new DailyIntakeSummary(userId, date));
+                .findByUserIdAndSummaryDate(loginUserId, date)
+                .orElseGet(() -> new DailyIntakeSummary(loginUserId, date));
 
         return new MealLogDto.DailySummaryResponse(
-                userId,
+                loginUserId,
                 date.toString(),
                 s.getTotalCalories(),
                 s.getTotalSodium(),
@@ -110,7 +110,7 @@ public class MealLogService {
     }
 
     /**
-     * 지금은 “누적 구조”만 완성하는 단계라 최소 구현:
+     * 지금은 누적 구조만 완성하는 단계라 최소 구현:
      * - FoodMaster 연동되면 여기에서 foodId + quantity로 영양값 계산해서 반환하면 됨
      */
     private Nutrients calculateNutrients(List<MealLogItem> items) {
