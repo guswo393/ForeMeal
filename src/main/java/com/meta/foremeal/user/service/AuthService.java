@@ -1,7 +1,7 @@
 package com.meta.foremeal.user.service;
 
-import com.meta.foremeal.user.api.dto.AuthDto;
 import com.meta.foremeal.user.domain.User;
+import com.meta.foremeal.user.dto.AuthDto;
 import com.meta.foremeal.user.exception.InvalidLoginException;
 import com.meta.foremeal.user.repo.UserRepository;
 import org.springframework.stereotype.Service;

@@ -1,6 +1,6 @@
 package com.meta.foremeal.user.api;
 
-import com.meta.foremeal.user.api.dto.UserDto;
+import com.meta.foremeal.user.dto.UserDto;
 import com.meta.foremeal.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;

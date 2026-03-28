@@ -1,8 +1,8 @@
 package com.meta.foremeal.user.service;
 
-import com.meta.foremeal.user.api.dto.UserDto;
 import com.meta.foremeal.user.domain.User;
 import com.meta.foremeal.user.domain.UserRole;
+import com.meta.foremeal.user.dto.UserDto;
 import com.meta.foremeal.user.exception.DuplicateEmailException;
 import com.meta.foremeal.user.exception.UserNotFoundException;
 import com.meta.foremeal.user.repo.UserRepository;
