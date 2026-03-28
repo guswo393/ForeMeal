@@ -44,14 +44,14 @@
 .profile-icon-head{
   width:30px;
   height:30px;
-  border:4px solid black;
+  border:4px solid #00610a;
   border-radius:50%;
 }
 
 .profile-icon-body{
   width:60px;
   height:35px;
-  border:4px solid black;
+  border:4px solid #00610a;
   border-bottom:none;
   border-top-left-radius:30px;
   border-top-right-radius:30px;
@@ -86,7 +86,7 @@
 .nickname-save-btn{
   width:60px;
   border:none;
-  background:black;
+  background:#00610a;
   color:white;
   border-radius:8px;
   cursor:pointer;
@@ -187,7 +187,7 @@
   width:100%;
   height:45px;
   border:none;
-  background:black;
+  background:#00610a;
   color:white;
   border-radius:10px;
   font-size:15px;
