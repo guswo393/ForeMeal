@@ -1,8 +1,10 @@
 package com.meta.foremeal.user.api;
 
+import com.meta.foremeal.global.security.principal.CustomUserPrincipal;
 import com.meta.foremeal.user.dto.UserDto;
 import com.meta.foremeal.user.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,20 +22,20 @@ public class UserController {
         return userService.create(request);
     }
 
-    @GetMapping("/{userId}")
-    public UserDto.Response getById(@PathVariable Long userId) {
-        return userService.getById(userId);
+    @GetMapping("/me")
+    public UserDto.Response getMe(@AuthenticationPrincipal CustomUserPrincipal principal) {
+        return userService.getById(principal.getUserId());
     }
 
-    @PutMapping("/{userId}")
-    public UserDto.Response update(@PathVariable Long userId,
-                                   @RequestBody @Valid UserDto.UpdateRequest request) {
-        return userService.update(userId, request);
+    @PutMapping("/me")
+    public UserDto.Response updateMe(@AuthenticationPrincipal CustomUserPrincipal principal,
+                                     @RequestBody @Valid UserDto.UpdateRequest request) {
+        return userService.update(principal.getUserId(), request);
     }
 
-    @PatchMapping("/{userId}/password")
-    public void changePassword(@PathVariable Long userId,
+    @PatchMapping("/me/password")
+    public void changePassword(@AuthenticationPrincipal CustomUserPrincipal principal,
                                @RequestBody @Valid UserDto.ChangePasswordRequest request) {
-        userService.changePassword(userId, request);
+        userService.changePassword(principal.getUserId(), request);
     }
 }

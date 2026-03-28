@@ -20,6 +20,7 @@ public class AuthDto {
     public record LoginResponse(
             String accessToken,
             String tokenType,
+            Long expiresIn,
             Long userId,
             String email,
             String username,

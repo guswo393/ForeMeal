@@ -1,5 +1,6 @@
 package com.meta.foremeal.user.service;
 
+import com.meta.foremeal.global.security.jwt.JwtTokenProvider;
 import com.meta.foremeal.user.domain.User;
 import com.meta.foremeal.user.dto.AuthDto;
 import com.meta.foremeal.user.exception.InvalidLoginException;
@@ -14,10 +15,14 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       JwtTokenProvider jwtTokenProvider) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     public AuthDto.LoginResponse login(AuthDto.LoginRequest request) {
@@ -28,9 +33,16 @@ public class AuthService {
             throw new InvalidLoginException();
         }
 
+        String accessToken = jwtTokenProvider.generateAccessToken(
+                user.getUserId(),
+                user.getEmail(),
+                user.getRole().name()
+        );
+
         return new AuthDto.LoginResponse(
-                "temp-token",
+                accessToken,
                 "Bearer",
+                jwtTokenProvider.getAccessTokenExpirationMs(),
                 user.getUserId(),
                 user.getEmail(),
                 user.getUsername(),
