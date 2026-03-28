@@ -1,4 +1,4 @@
-package com.meta.foremeal.user.api.dto;
+package com.meta.foremeal.user.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
