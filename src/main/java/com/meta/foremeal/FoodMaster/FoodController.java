@@ -1,7 +1,5 @@
-package com.meta.foremeal.Controller;
+package com.meta.foremeal.FoodMaster;
 
-import com.meta.foremeal.Entity.FoodMaster;
-import com.meta.foremeal.Service.FoodService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,12 +16,12 @@ public class FoodController {
 
     //데이터 저장
     @PostMapping
-    public FoodMaster addFood(@RequestBody FoodMaster food){
+    public FoodMasterEntity addFood(@RequestBody FoodMasterEntity food){
         return foodService.saveFood(food);
     }
 
     //데이터 조회
-    public List<FoodMaster> listFoods(){
+    public List<FoodMasterEntity> listFoods(){
         return foodService.getAllFoods();
     }
 }

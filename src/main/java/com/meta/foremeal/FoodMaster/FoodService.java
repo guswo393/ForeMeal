@@ -1,7 +1,5 @@
-package com.meta.foremeal.Service;
+package com.meta.foremeal.FoodMaster;
 
-import com.meta.foremeal.Entity.FoodMaster;
-import com.meta.foremeal.Repository.FoodMasterRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,12 +12,12 @@ public class FoodService {
     private final FoodMasterRepository foodRepository;
 
     //데이터 저장 (create)
-    public FoodMaster saveFood(FoodMaster food){
+    public FoodMasterEntity saveFood(FoodMasterEntity food){
         return foodRepository.save(food);
     }
 
     //전체 조회(read)
-    public List<FoodMaster> getAllFoods(){
+    public List<FoodMasterEntity> getAllFoods(){
         return foodRepository.findAll();
     }
 }

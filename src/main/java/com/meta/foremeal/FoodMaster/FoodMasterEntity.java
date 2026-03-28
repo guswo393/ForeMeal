@@ -1,4 +1,4 @@
-package com.meta.foremeal.Entity;
+package com.meta.foremeal.FoodMaster;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 
-public class FoodMaster {
+public class FoodMasterEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,7 +28,7 @@ public class FoodMaster {
     @Column(name="gi_index")
     private Double giIndex;
 
-    public FoodMaster(String foodName, Double calories, Double sugar){
+    public FoodMasterEntity(String foodName, Double calories, Double sugar){
         this.foodName=foodName;
         this.calories=calories;
         this.sugar=sugar;
