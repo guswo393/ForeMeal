@@ -114,10 +114,6 @@ public class MealLogService {
         );
     }
 
-    /**
-     * 지금은 누적 구조만 완성하는 단계라 최소 구현:
-     * - FoodMaster 연동되면 여기에서 foodId + quantity로 영양값 계산해서 반환하면 됨
-     */
     private Nutrients calculateNutrients(List<MealLogItem> items) {
         Nutrients total = new Nutrients(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
 
@@ -145,11 +141,11 @@ public class MealLogService {
         BigDecimal quantity = item.getQuantity() == null ? BigDecimal.ZERO : item.getQuantity();
         String unit = item.getUnit() == null ? "" : item.getUnit().trim().toLowerCase();
 
-        if (unit.equals("g") || unit.equals("gram") || unit.equals("grams") || unit.equals("그램")) {
+        if (unit.equals("g") || unit.equals("gram") || unit.equals("grams")) {
             return quantity.divide(BigDecimal.valueOf(100));
         }
 
-        if (unit.equals("kg") || unit.equals("kilogram") || unit.equals("kilograms") || unit.equals("킬로그램")) {
+        if (unit.equals("kg") || unit.equals("kilogram") || unit.equals("kilograms")) {
             return quantity.multiply(BigDecimal.TEN);
         }
 
