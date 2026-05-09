@@ -19,7 +19,7 @@ public class FoodController {
     }
 
     //식품 상세 조회
-    @GetMapping("/{id}")
+    @GetMapping
     public ResponseEntity<FoodMasterEntity> getDetail(@PathVariable Long id) {
         return ResponseEntity.ok(foodService.getFoodDetail(id));
     }
