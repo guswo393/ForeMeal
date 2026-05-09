@@ -1,27 +1,41 @@
-function MealRecommendPage() {
+import "../styles/MealRecommendPage.css";
+
+function MealRecommendPage({ setCurrentPage }) {
+  const menuItems = [
+    {
+      id: 1,
+      title: "추천 레시피",
+      image: "/images/recipe.png",
+      page: "recipeRecommend",
+    },
+    {
+      id: 2,
+      title: "외식, 배달",
+      image: "/images/delivery.png",
+      page: "delivery",
+    },
+    {
+      id: 3,
+      title: "수치환산",
+      image: "/images/calculator.png",
+      page: "calculator",
+    },
+  ];
+
   return (
-    <section className="page">
-      <div className="card">
-        <h2>추천 식단</h2>
-        <p>혈당 상태에 맞는 식단을 추천해드려요.</p>
-      </div>
+    <div className="meal-page">
+      {menuItems.map((item) => (
+        <div className="meal-card" key={item.id}>
+          <img src={item.image} alt={item.title} className="meal-image" />
 
-      <div className="card">
-        <h3>아침</h3>
-        <p>오트밀 + 삶은 달걀 + 사과 반쪽</p>
-      </div>
-
-      <div className="card">
-        <h3>점심</h3>
-        <p>현미밥 + 생선구이 + 샐러드</p>
-      </div>
-
-      <div className="card">
-        <h3>저녁</h3>
-        <p>두부샐러드 + 고구마 + 견과류</p>
-      </div>
-    </section>
-  )
+          <div className="meal-info">
+            <h2>{item.title}</h2>
+            <button onClick={() => setCurrentPage(item.page)}>선택</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
-export default MealRecommendPage
+export default MealRecommendPage;

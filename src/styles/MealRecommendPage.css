@@ -1,0 +1,49 @@
+.meal-page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 30px 18px 90px;
+  background-color: white;
+  box-sizing: border-box;
+}
+
+.meal-card {
+  width: 100%;
+  margin-bottom: 36px;
+}
+
+.meal-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+
+.meal-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.meal-info h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  color: #111;
+}
+
+.meal-info button {
+  width: 86px;
+  height: 38px;
+  border: none;
+  border-radius: 9px;
+  background-color: #00610a;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.meal-info button:active {
+  transform: scale(0.97);
+}
