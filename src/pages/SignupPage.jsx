@@ -34,6 +34,13 @@ function SignupPage({ setAuthPage, signupUser, setSignupUser }) {
       return
     }
 
+    const today = new Date().toISOString().split('T')[0]
+
+    if (birth > today) {
+      alert('생일은 오늘 이후 날짜로 설정할 수 없습니다.')
+      return
+    }
+
     setSignupUser({
       userId,
       password,
@@ -112,6 +119,7 @@ function SignupPage({ setAuthPage, signupUser, setSignupUser }) {
           name="birth"
           value={form.birth}
           onChange={handleChange}
+          max={new Date().toISOString().split('T')[0]}
           className="signup-input"
         />
 
