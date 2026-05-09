@@ -1,5 +1,7 @@
 package com.meta.foremeal.meallog.service;
 
+import com.meta.foremeal.FoodMaster.FoodMasterEntity;
+import com.meta.foremeal.FoodMaster.FoodMasterRepository;
 import com.meta.foremeal.meallog.api.dto.MealLogDto;
 import com.meta.foremeal.meallog.domain.DailyIntakeSummary;
 import com.meta.foremeal.meallog.domain.MealLog;
@@ -19,11 +21,14 @@ public class MealLogService {
 
     private final MealLogRepository mealLogRepository;
     private final DailyIntakeSummaryRepository summaryRepository;
+    private final FoodMasterRepository foodRepository;
 
     public MealLogService(MealLogRepository mealLogRepository,
-                          DailyIntakeSummaryRepository summaryRepository) {
+                          DailyIntakeSummaryRepository summaryRepository,
+                          FoodMasterRepository foodRepository) {
         this.mealLogRepository = mealLogRepository;
         this.summaryRepository = summaryRepository;
+        this.foodRepository = foodRepository;
     }
 
     @Transactional
@@ -114,7 +119,49 @@ public class MealLogService {
      * - FoodMaster 연동되면 여기에서 foodId + quantity로 영양값 계산해서 반환하면 됨
      */
     private Nutrients calculateNutrients(List<MealLogItem> items) {
-        return new Nutrients(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+        Nutrients total = new Nutrients(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+
+        for (MealLogItem item : items) {
+            if (item.getFoodId() == null) {
+                continue;
+            }
+
+            FoodMasterEntity food = foodRepository.findById(item.getFoodId())
+                    .orElseThrow(() -> new IllegalArgumentException("Food not found. foodId=" + item.getFoodId()));
+
+            BigDecimal multiplier = nutrientMultiplier(item);
+            total = total.add(new Nutrients(
+                    multiply(food.getCalories(), multiplier),
+                    multiply(food.getSodium(), multiplier),
+                    multiply(food.getSugar(), multiplier),
+                    multiply(food.getCarbs(), multiplier)
+            ));
+        }
+
+        return total;
+    }
+
+    private BigDecimal nutrientMultiplier(MealLogItem item) {
+        BigDecimal quantity = item.getQuantity() == null ? BigDecimal.ZERO : item.getQuantity();
+        String unit = item.getUnit() == null ? "" : item.getUnit().trim().toLowerCase();
+
+        if (unit.equals("g") || unit.equals("gram") || unit.equals("grams") || unit.equals("그램")) {
+            return quantity.divide(BigDecimal.valueOf(100));
+        }
+
+        if (unit.equals("kg") || unit.equals("kilogram") || unit.equals("kilograms") || unit.equals("킬로그램")) {
+            return quantity.multiply(BigDecimal.TEN);
+        }
+
+        return quantity;
+    }
+
+    private BigDecimal multiply(Double value, BigDecimal multiplier) {
+        if (value == null) {
+            return BigDecimal.ZERO;
+        }
+
+        return BigDecimal.valueOf(value).multiply(multiplier);
     }
 
     private static class Nutrients {
@@ -128,6 +175,15 @@ public class MealLogService {
             this.sodium = nz(sodium);
             this.sugar = nz(sugar);
             this.carbs = nz(carbs);
+        }
+
+        Nutrients add(Nutrients other) {
+            return new Nutrients(
+                    this.calories.add(other.calories),
+                    this.sodium.add(other.sodium),
+                    this.sugar.add(other.sugar),
+                    this.carbs.add(other.carbs)
+            );
         }
 
         private static BigDecimal nz(BigDecimal v) {
