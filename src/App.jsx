@@ -8,6 +8,7 @@ import RefrigeratorPage from './pages/RefrigeratorPage'
 import MyPage from './pages/MyPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
+import RecipeRecommendPage from "./pages/RecipeRecommendPage";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -62,12 +63,17 @@ function App() {
     }
 
     if (currentPage === 'meal') {
-      return <MealRecommendPage />
+      return <MealRecommendPage setCurrentPage={setCurrentPage} />
+    }
+
+    if (currentPage === 'recipeRecommend') {
+      return <RecipeRecommendPage />
     }
 
     if (currentPage === 'refrigerator') {
       return <RefrigeratorPage />
     }
+    
 
     if (currentPage === 'mypage') {
       return (
