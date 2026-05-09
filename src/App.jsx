@@ -4,6 +4,7 @@ import BottomNav from './components/BottomNav'
 import HomePage from './pages/HomePage'
 import GlucosePage from './pages/GlucosePage'
 import MealRecommendPage from './pages/MealRecommendPage'
+import RefrigeratorPage from './pages/RefrigeratorPage'
 import MyPage from './pages/MyPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
@@ -62,6 +63,10 @@ function App() {
 
     if (currentPage === 'meal') {
       return <MealRecommendPage />
+    }
+
+    if (currentPage === 'refrigerator') {
+      return <RefrigeratorPage />
     }
 
     if (currentPage === 'mypage') {

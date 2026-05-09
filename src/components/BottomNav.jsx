@@ -23,6 +23,13 @@ function BottomNav({ currentPage, setCurrentPage }) {
       </button>
 
       <button
+        className={currentPage === 'refrigerator' ? 'nav-btn active' : 'nav-btn'}
+        onClick={() => setCurrentPage('refrigerator')}
+      >
+        냉장고
+      </button>
+
+      <button
         className={currentPage === 'mypage' ? 'nav-btn active' : 'nav-btn'}
         onClick={() => setCurrentPage('mypage')}
       >
