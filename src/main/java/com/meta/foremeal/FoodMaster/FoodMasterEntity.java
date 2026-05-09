@@ -1,12 +1,15 @@
 package com.meta.foremeal.FoodMaster;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name="FoodMaster")
-@Getter
+@Getter @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 
 public class FoodMasterEntity {
 
@@ -17,6 +20,7 @@ public class FoodMasterEntity {
 
     @Column(nullable = false)
     private String foodName;
+    private String category;
 
     private Double calories;
     private Double carbs;

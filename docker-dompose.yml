@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    container_name: healthcare-pg
+    environment:
+      POSTGRES_DB: healthcare_db      # 위 properties의 URL 끝부분과 일치
+      POSTGRES_USER: user             # 위 properties의 username과 일치
+      POSTGRES_PASSWORD: password     # 위 properties의 password와 일치
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
