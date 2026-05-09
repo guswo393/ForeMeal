@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name="FoodMaster")
+@Table(name="food_master")
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,6 +15,7 @@ public class FoodMasterEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name="food_id")
     private Long foodId;
 
 
