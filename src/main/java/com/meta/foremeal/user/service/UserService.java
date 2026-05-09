@@ -1,0 +1,74 @@
+package com.meta.foremeal.user.service;
+
+import com.meta.foremeal.user.domain.User;
+import com.meta.foremeal.user.domain.UserRole;
+import com.meta.foremeal.user.dto.UserDto;
+import com.meta.foremeal.user.exception.DuplicateEmailException;
+import com.meta.foremeal.user.exception.UserNotFoundException;
+import com.meta.foremeal.user.repo.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional
+public class UserService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    public UserDto.Response create(UserDto.CreateRequest request) {
+        if (userRepository.existsByEmail(request.email())) {
+            throw new DuplicateEmailException(request.email());
+        }
+
+        String encodedPassword = passwordEncoder.encode(request.password());
+
+        User user = new User(
+                request.email(),
+                encodedPassword,
+                request.username(),
+                request.birthYear(),
+                UserRole.USER
+        );
+
+        User savedUser = userRepository.save(user);
+        return toResponse(savedUser);
+    }
+
+    @Transactional(readOnly = true)
+    public UserDto.Response getById(Long userId) {
+        User user = findUser(userId);
+        return toResponse(user);
+    }
+
+    public UserDto.Response update(Long userId, UserDto.UpdateRequest request) {
+        User user = findUser(userId);
+        user.update(request.username(), request.birthYear());
+        return toResponse(user);
+    }
+
+    public void changePassword(Long userId, UserDto.ChangePasswordRequest request) {
+        User user = findUser(userId);
+        user.changePassword(passwordEncoder.encode(request.password()));
+    }
+
+    private User findUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+    }
+
+    private UserDto.Response toResponse(User user) {
+        return new UserDto.Response(
+                user.getUserId(),
+                user.getEmail(),
+                user.getUsername(),
+                user.getBirthYear()
+        );
+    }
+}
