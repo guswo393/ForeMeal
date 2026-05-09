@@ -1,10 +1,8 @@
 package com.meta.foremeal.FoodMaster;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -14,14 +12,15 @@ import java.util.List;
 public class FoodController {
     private final FoodService foodService;
 
-    //데이터 저장
-    @PostMapping
-    public FoodMasterEntity addFood(@RequestBody FoodMasterEntity food){
-        return foodService.saveFood(food);
+    //식품 검색 (/api/foods/search?name=닭가습살)
+    @GetMapping("/search")
+    public ResponseEntity<List<FoodMasterEntity>> search(@RequestParam String name) {
+        return ResponseEntity.ok(foodService.searchFoods(name));
     }
 
-    //데이터 조회
-    public List<FoodMasterEntity> listFoods(){
-        return foodService.getAllFoods();
+    //식품 상세 조회
+    @GetMapping
+    public ResponseEntity<FoodMasterEntity> getDetail(@PathVariable Long id) {
+        return ResponseEntity.ok(foodService.getFoodDetail(id));
     }
 }
