@@ -21,7 +21,8 @@ import java.util.Set;
 @Service
 public class RecommendationService {
 
-    private static final BigDecimal HIGH_DAILY_CALORIES = new BigDecimal("1800");
+    private static final BigDecimal DAILY_CALORIE_GOAL = new BigDecimal("2200");
+    private static final BigDecimal CALORIE_LIGHT_MEAL_RATIO = new BigDecimal("0.8");
     private static final BigDecimal HIGH_DAILY_SUGAR = new BigDecimal("50");
     private static final BigDecimal HIGH_DAILY_CARBS = new BigDecimal("250");
     private static final BigDecimal LOW_RECIPE_CALORIES = new BigDecimal("500");
@@ -81,42 +82,42 @@ public class RecommendationService {
 
         if (isLowGi(recipe)) {
             score += 25;
-            appendReason(reason, "LOW GI 레시피");
+            appendReason(reason, "혈당 부담이 낮은 LOW GI 레시피예요.");
         }
 
         if (isLowCalorie(recipe)) {
             score += 20;
-            appendReason(reason, "가벼운 칼로리");
+            appendReason(reason, "총 칼로리가 낮아 가볍게 먹기 좋아요.");
         }
 
         if (isQuick(recipe)) {
             score += 10;
-            appendReason(reason, "짧은 조리시간");
+            appendReason(reason, "30분 이내로 조리할 수 있어요.");
         }
 
         if (isEasy(recipe)) {
             score += 10;
-            appendReason(reason, "쉬운 난이도");
+            appendReason(reason, "난이도가 쉬워 부담 없이 만들 수 있어요.");
         }
 
-        if (isHigh(summary.getTotalCalories(), HIGH_DAILY_CALORIES) && isLowCalorie(recipe)) {
+        if (needsLightMeal(summary) && isLowCalorie(recipe)) {
             score += 20;
-            appendReason(reason, "오늘 섭취 칼로리 기준 적합");
+            appendReason(reason, "오늘 권장 섭취량에 가까워져 가벼운 레시피를 우선 추천했어요.");
         }
 
         if ((isHigh(summary.getTotalSugar(), HIGH_DAILY_SUGAR) || isHigh(summary.getTotalCarbs(), HIGH_DAILY_CARBS))
                 && isLowGi(recipe)) {
             score += 25;
-            appendReason(reason, "오늘 당/탄수화물 섭취 기준 적합");
+            appendReason(reason, "오늘 당/탄수화물 섭취가 높아 LOW GI 레시피를 우선 추천했어요.");
         }
 
         if (recentlyEatenRecipeIds.contains(recipe.getRecipeId())) {
             score -= 40;
-            appendReason(reason, "최근 먹은 레시피라 감점");
+            appendReason(reason, "최근에 먹은 레시피라 추천 우선순위를 낮췄어요.");
         }
 
         if (reason.isEmpty()) {
-            appendReason(reason, "기본 추천 레시피");
+            appendReason(reason, "현재 식사 기록을 기준으로 무난하게 추천할 수 있는 레시피예요.");
         }
 
         return new ScoredRecipe(recipe, score, reason.toString());
@@ -141,6 +142,12 @@ public class RecommendationService {
 
     private boolean isHigh(BigDecimal value, BigDecimal threshold) {
         return value != null && value.compareTo(threshold) >= 0;
+    }
+
+    private boolean needsLightMeal(DailyIntakeSummary summary) {
+        BigDecimal threshold = DAILY_CALORIE_GOAL.multiply(CALORIE_LIGHT_MEAL_RATIO);
+        return summary.getTotalCalories() != null
+                && summary.getTotalCalories().compareTo(threshold) >= 0;
     }
 
     private void appendReason(StringBuilder reason, String message) {
