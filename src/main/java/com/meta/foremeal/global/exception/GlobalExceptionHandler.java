@@ -3,6 +3,7 @@ package com.meta.foremeal.global.exception;
 import com.meta.foremeal.health.exception.HealthProfileNotFoundException;
 import com.meta.foremeal.user.exception.DuplicateEmailException;
 import com.meta.foremeal.user.exception.InvalidLoginException;
+import com.meta.foremeal.user.exception.InvalidPasswordException;
 import com.meta.foremeal.user.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.of("INVALID_LOGIN", e.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidPasswordException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPassword(InvalidPasswordException e) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ErrorResponse.of("INVALID_PASSWORD", e.getMessage()));
     }
 
     @ExceptionHandler(HealthProfileNotFoundException.class)

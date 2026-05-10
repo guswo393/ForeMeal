@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface MealLogRepository extends JpaRepository<MealLog, Long> {
     List<MealLog> findByUserIdAndEatenAtBetweenOrderByEatenAtAsc(Long userId, LocalDateTime from, LocalDateTime to);
+    void deleteByUserId(Long userId);
 }

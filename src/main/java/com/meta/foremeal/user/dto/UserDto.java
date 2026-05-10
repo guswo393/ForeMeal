@@ -38,6 +38,17 @@ public class UserDto {
     public record ChangePasswordRequest(
             @NotBlank
             @Size(min = 4, max = 255)
+            String currentPassword,
+
+            @NotBlank
+            @Size(min = 4, max = 255)
+            String newPassword
+    ) {
+    }
+
+    public record DeleteRequest(
+            @NotBlank
+            @Size(min = 4, max = 255)
             String password
     ) {
     }
