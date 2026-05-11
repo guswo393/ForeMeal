@@ -2,6 +2,8 @@ package com.meta.foremeal.user.domain;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "users")
 public class User {
@@ -20,8 +22,8 @@ public class User {
     @Column(name = "username", nullable = false, length = 100)
     private String username;
 
-    @Column(name = "birth_year")
-    private Integer birthYear;
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
@@ -30,11 +32,11 @@ public class User {
     protected User() {
     }
 
-    public User(String email, String password, String username, Integer birthYear, UserRole role) {
+    public User(String email, String password, String username, LocalDate birthDate, UserRole role) {
         this.email = email;
         this.password = password;
         this.username = username;
-        this.birthYear = birthYear;
+        this.birthDate = birthDate;
         this.role = role;
     }
 
@@ -55,16 +57,20 @@ public class User {
     }
 
     public Integer getBirthYear() {
-        return birthYear;
+        return birthDate == null ? null : birthDate.getYear();
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
     }
 
     public UserRole getRole() {
         return role;
     }
 
-    public void update(String username, Integer birthYear) {
+    public void update(String username, LocalDate birthDate) {
         this.username = username;
-        this.birthYear = birthYear;
+        this.birthDate = birthDate;
     }
 
     public void changePassword(String password) {

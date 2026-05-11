@@ -3,7 +3,10 @@ package com.meta.foremeal.user.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
+
+import java.time.LocalDate;
 
 public class UserDto {
 
@@ -21,7 +24,8 @@ public class UserDto {
             String username,
 
             @NotNull
-            Integer birthYear
+            @Past
+            LocalDate birthDate
     ) {
     }
 
@@ -31,7 +35,8 @@ public class UserDto {
             String username,
 
             @NotNull
-            Integer birthYear
+            @Past
+            LocalDate birthDate
     ) {
     }
 
@@ -57,7 +62,8 @@ public class UserDto {
             Long userId,
             String email,
             String username,
-            Integer birthYear
+            Integer birthYear,
+            LocalDate birthDate
     ) {
     }
 }

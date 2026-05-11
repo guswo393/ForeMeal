@@ -47,7 +47,7 @@ public class UserService {
                 request.email(),
                 encodedPassword,
                 request.username(),
-                request.birthYear(),
+                request.birthDate(),
                 UserRole.USER
         );
 
@@ -63,7 +63,7 @@ public class UserService {
 
     public UserDto.Response update(Long userId, UserDto.UpdateRequest request) {
         User user = findUser(userId);
-        user.update(request.username(), request.birthYear());
+        user.update(request.username(), request.birthDate());
         return toResponse(user);
     }
 
@@ -99,7 +99,8 @@ public class UserService {
                 user.getUserId(),
                 user.getEmail(),
                 user.getUsername(),
-                user.getBirthYear()
+                user.getBirthYear(),
+                user.getBirthDate()
         );
     }
 }
