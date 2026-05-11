@@ -25,8 +25,13 @@ public class RecipeController {
     }
 
     @GetMapping
-    public List<RecipeDto.Response> getAll() {
-        return recipeService.getAll();
+    public List<RecipeDto.Response> getAll(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String dishType,
+            @RequestParam(required = false) String difficulty,
+            @RequestParam(required = false) Integer maxCookingTime
+    ) {
+        return recipeService.getAll(category, dishType, difficulty, maxCookingTime);
     }
 
     @GetMapping("/{recipeId}")

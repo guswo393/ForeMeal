@@ -3,6 +3,7 @@ package com.meta.foremeal.recipe.service;
 import com.meta.foremeal.recipe.domain.Recipe;
 import com.meta.foremeal.recipe.domain.RecipeIngredient;
 import com.meta.foremeal.recipe.domain.RecipeStep;
+import com.meta.foremeal.recipe.domain.Substitute;
 import com.meta.foremeal.recipe.dto.RecipeDto;
 import com.meta.foremeal.recipe.exception.RecipeNotFoundException;
 import com.meta.foremeal.recipe.repo.RecipeRepository;
@@ -33,7 +34,8 @@ public class RecipeService {
                 req.servings(),
                 req.totalCalories(),
                 req.totalNutrients(),
-                req.giLevel()
+                req.giLevel(),
+                req.imageUri()
         );
 
         toIngredients(req.ingredients()).forEach(recipe::addIngredient);
@@ -43,9 +45,14 @@ public class RecipeService {
     }
 
     @Transactional(readOnly = true)
-    public List<RecipeDto.Response> getAll() {
+    public List<RecipeDto.Response> getAll(String category, String dishType, String difficulty, Integer maxCookingTime) {
         return recipeRepository.findAll()
                 .stream()
+                .filter(recipe -> matches(category, recipe.getCategory()))
+                .filter(recipe -> matches(dishType, recipe.getDishType()))
+                .filter(recipe -> matches(difficulty, recipe.getDifficulty()))
+                .filter(recipe -> maxCookingTime == null
+                        || recipe.getCookingTime() != null && recipe.getCookingTime() <= maxCookingTime)
                 .map(this::toResponse)
                 .toList();
     }
@@ -68,7 +75,8 @@ public class RecipeService {
                 req.servings(),
                 req.totalCalories(),
                 req.totalNutrients(),
-                req.giLevel()
+                req.giLevel(),
+                req.imageUri()
         );
 
         recipe.replaceIngredients(toIngredients(req.ingredients()));
@@ -94,11 +102,29 @@ public class RecipeService {
         }
 
         return requests.stream()
-                .map(it -> new RecipeIngredient(
+                .map(it -> {
+                    RecipeIngredient ingredient = new RecipeIngredient(
                         it.foodId(),
                         it.ingredientName(),
                         it.quantity(),
                         it.unit()
+                    );
+
+                    toSubstitutes(it.substitutes()).forEach(ingredient::addSubstitute);
+                    return ingredient;
+                })
+                .toList();
+    }
+
+    private List<Substitute> toSubstitutes(List<RecipeDto.SubstituteRequest> requests) {
+        if (requests == null) {
+            return List.of();
+        }
+
+        return requests.stream()
+                .map(it -> new Substitute(
+                        it.conversionRatio(),
+                        it.description()
                 ))
                 .toList();
     }
@@ -124,7 +150,8 @@ public class RecipeService {
                         it.getFoodId(),
                         it.getIngredientName(),
                         it.getQuantity(),
-                        it.getUnit()
+                        it.getUnit(),
+                        toSubstituteResponses(it)
                 ))
                 .toList();
 
@@ -150,8 +177,23 @@ public class RecipeService {
                 recipe.getTotalCalories(),
                 recipe.getTotalNutrients(),
                 recipe.getGiLevel(),
+                recipe.getImageUri(),
                 ingredients,
                 steps
         );
+    }
+
+    private List<RecipeDto.SubstituteResponse> toSubstituteResponses(RecipeIngredient ingredient) {
+        return ingredient.getSubstitutes().stream()
+                .map(it -> new RecipeDto.SubstituteResponse(
+                        it.getSubId(),
+                        it.getConversionRatio(),
+                        it.getDescription()
+                ))
+                .toList();
+    }
+
+    private boolean matches(String expected, String actual) {
+        return expected == null || expected.isBlank() || expected.equals(actual);
     }
 }

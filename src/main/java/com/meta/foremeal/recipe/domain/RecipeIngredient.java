@@ -3,6 +3,8 @@ package com.meta.foremeal.recipe.domain;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "recipe_ingredients")
@@ -29,6 +31,9 @@ public class RecipeIngredient {
     @Column(name = "unit", length = 30)
     private String unit;
 
+    @OneToMany(mappedBy = "ingredient", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Substitute> substitutes = new ArrayList<>();
+
     protected RecipeIngredient() {
     }
 
@@ -43,9 +48,15 @@ public class RecipeIngredient {
         this.recipe = recipe;
     }
 
+    public void addSubstitute(Substitute substitute) {
+        substitute.attach(this);
+        this.substitutes.add(substitute);
+    }
+
     public Long getItemId() { return itemId; }
     public Long getFoodId() { return foodId; }
     public String getIngredientName() { return ingredientName; }
     public BigDecimal getQuantity() { return quantity; }
     public String getUnit() { return unit; }
+    public List<Substitute> getSubstitutes() { return substitutes; }
 }

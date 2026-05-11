@@ -14,7 +14,13 @@ public class RecipeDto {
             Long foodId,
             @NotBlank @Size(max = 255) String ingredientName,
             BigDecimal quantity,
-            @Size(max = 30) String unit
+            @Size(max = 30) String unit,
+            @Valid List<SubstituteRequest> substitutes
+    ) {}
+
+    public record SubstituteRequest(
+            BigDecimal conversionRatio,
+            String description
     ) {}
 
     public record StepRequest(
@@ -34,6 +40,7 @@ public class RecipeDto {
             BigDecimal totalCalories,
             String totalNutrients,
             @Size(max = 50) String giLevel,
+            @Size(max = 500) String imageUri,
             @Valid List<IngredientRequest> ingredients,
             @Valid List<StepRequest> steps
     ) {}
@@ -49,6 +56,7 @@ public class RecipeDto {
             BigDecimal totalCalories,
             String totalNutrients,
             @Size(max = 50) String giLevel,
+            @Size(max = 500) String imageUri,
             @Valid List<IngredientRequest> ingredients,
             @Valid List<StepRequest> steps
     ) {}
@@ -58,7 +66,14 @@ public class RecipeDto {
             Long foodId,
             String ingredientName,
             BigDecimal quantity,
-            String unit
+            String unit,
+            List<SubstituteResponse> substitutes
+    ) {}
+
+    public record SubstituteResponse(
+            Long subId,
+            BigDecimal conversionRatio,
+            String description
     ) {}
 
     public record StepResponse(
@@ -80,6 +95,7 @@ public class RecipeDto {
             BigDecimal totalCalories,
             String totalNutrients,
             String giLevel,
+            String imageUri,
             List<IngredientResponse> ingredients,
             List<StepResponse> steps
     ) {}
