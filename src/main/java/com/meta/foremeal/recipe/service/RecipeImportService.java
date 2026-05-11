@@ -7,6 +7,8 @@ import com.meta.foremeal.recipe.domain.RecipeIngredient;
 import com.meta.foremeal.recipe.domain.RecipeStep;
 import com.meta.foremeal.recipe.external.FoodSafetyRecipeClient;
 import com.meta.foremeal.recipe.external.FoodSafetyRecipeDto;
+import com.meta.foremeal.recipe.parser.ParsedIngredient;
+import com.meta.foremeal.recipe.parser.RecipeIngredientParser;
 import com.meta.foremeal.recipe.repo.RecipeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,13 +26,16 @@ public class RecipeImportService {
     private final FoodSafetyRecipeClient foodSafetyRecipeClient;
     private final RecipeRepository recipeRepository;
     private final ObjectMapper objectMapper;
+    private final RecipeIngredientParser recipeIngredientParser;
 
     public RecipeImportService(FoodSafetyRecipeClient foodSafetyRecipeClient,
                                RecipeRepository recipeRepository,
-                               ObjectMapper objectMapper) {
+                               ObjectMapper objectMapper,
+                               RecipeIngredientParser recipeIngredientParser) {
         this.foodSafetyRecipeClient = foodSafetyRecipeClient;
         this.recipeRepository = recipeRepository;
         this.objectMapper = objectMapper;
+        this.recipeIngredientParser = recipeIngredientParser;
     }
 
     @Transactional
@@ -75,7 +80,18 @@ public class RecipeImportService {
 
         String ingredientInfo = row.ingredientInfo();
         if (ingredientInfo != null) {
-            recipe.addIngredient(new RecipeIngredient(null, truncate(ingredientInfo, 255), null, null));
+            List<ParsedIngredient> parsedIngredients = recipeIngredientParser.parse(ingredientInfo);
+
+            if (parsedIngredients.isEmpty()) {
+                recipe.addIngredient(new RecipeIngredient(null, truncate(ingredientInfo, 255), null, null));
+            } else {
+                parsedIngredients.forEach(ingredient -> recipe.addIngredient(new RecipeIngredient(
+                        null,
+                        truncate(ingredient.ingredientName(), 255),
+                        ingredient.quantity(),
+                        ingredient.unit()
+                )));
+            }
         }
 
         for (int i = 1; i <= 20; i++) {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.meta.foremeal.recipe.domain.Recipe;
 import com.meta.foremeal.recipe.external.FoodSafetyRecipeClient;
 import com.meta.foremeal.recipe.external.FoodSafetyRecipeDto;
+import com.meta.foremeal.recipe.parser.RecipeIngredientParser;
 import com.meta.foremeal.recipe.repo.RecipeRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -22,12 +23,13 @@ public class RecipeImportServiceTest {
     private final RecipeImportService recipeImportService = new RecipeImportService(
             foodSafetyRecipeClient,
             recipeRepository,
-            new ObjectMapper()
+            new ObjectMapper(),
+            new RecipeIngredientParser()
     );
 
     @Test
     void importsFoodSafetyRecipes() throws Exception {
-        FoodSafetyRecipeDto response = response(row("1001", "닭가슴살 샐러드"));
+        FoodSafetyRecipeDto response = response(row("1001", "chicken salad"));
         when(foodSafetyRecipeClient.fetch(1, 1)).thenReturn(response);
         when(recipeRepository.existsBySourceAndExternalId("FOOD_SAFETY_KOREA", "1001")).thenReturn(false);
         when(recipeRepository.save(any(Recipe.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -44,15 +46,18 @@ public class RecipeImportServiceTest {
         Recipe saved = recipeCaptor.getValue();
         assertThat(saved.getExternalId()).isEqualTo("1001");
         assertThat(saved.getSource()).isEqualTo("FOOD_SAFETY_KOREA");
-        assertThat(saved.getTitle()).isEqualTo("닭가슴살 샐러드");
+        assertThat(saved.getTitle()).isEqualTo("chicken salad");
         assertThat(saved.getTotalCalories()).isEqualByComparingTo("350");
-        assertThat(saved.getIngredients()).hasSize(1);
+        assertThat(saved.getIngredients()).hasSize(2);
+        assertThat(saved.getIngredients().get(0).getIngredientName()).isEqualTo("chicken breast");
+        assertThat(saved.getIngredients().get(0).getQuantity()).isEqualByComparingTo("100");
+        assertThat(saved.getIngredients().get(0).getUnit()).isEqualTo("g");
         assertThat(saved.getSteps()).hasSize(2);
     }
 
     @Test
     void skipsAlreadyImportedFoodSafetyRecipes() throws Exception {
-        FoodSafetyRecipeDto response = response(row("1001", "닭가슴살 샐러드"));
+        FoodSafetyRecipeDto response = response(row("1001", "chicken salad"));
         when(foodSafetyRecipeClient.fetch(1, 1)).thenReturn(response);
         when(recipeRepository.existsBySourceAndExternalId("FOOD_SAFETY_KOREA", "1001")).thenReturn(true);
 
@@ -80,17 +85,17 @@ public class RecipeImportServiceTest {
         FoodSafetyRecipeDto.Row row = new FoodSafetyRecipeDto.Row();
         row.put("RCP_SEQ", recipeSeq);
         row.put("RCP_NM", recipeName);
-        row.put("RCP_PAT2", "샐러드");
-        row.put("RCP_WAY2", "기타");
+        row.put("RCP_PAT2", "salad");
+        row.put("RCP_WAY2", "etc");
         row.put("INFO_ENG", "350");
         row.put("INFO_CAR", "10");
         row.put("INFO_PRO", "25");
         row.put("INFO_FAT", "8");
         row.put("INFO_NA", "300");
         row.put("ATT_FILE_NO_MAIN", "https://example.com/main.jpg");
-        row.put("RCP_PARTS_DTLS", "닭가슴살 100g 양상추 50g");
-        row.put("MANUAL01", "재료를 손질한다.");
-        row.put("MANUAL02", "그릇에 담는다.");
+        row.put("RCP_PARTS_DTLS", "chicken breast 100g lettuce 50g");
+        row.put("MANUAL01", "prepare ingredients");
+        row.put("MANUAL02", "serve in a bowl");
         return row;
     }
 }
