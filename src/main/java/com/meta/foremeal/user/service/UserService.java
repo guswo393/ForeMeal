@@ -43,13 +43,21 @@ public class UserService {
 
         String encodedPassword = passwordEncoder.encode(request.password());
 
-        User user = new User(
-                request.email(),
-                encodedPassword,
-                request.username(),
-                request.birthYear(),
-                UserRole.USER
-        );
+        User user = request.birthDate() == null
+                ? new User(
+                        request.email(),
+                        encodedPassword,
+                        request.username(),
+                        request.birthYear(),
+                        UserRole.USER
+                )
+                : new User(
+                        request.email(),
+                        encodedPassword,
+                        request.username(),
+                        request.birthDate(),
+                        UserRole.USER
+                );
 
         User savedUser = userRepository.save(user);
         return toResponse(savedUser);
@@ -63,7 +71,11 @@ public class UserService {
 
     public UserDto.Response update(Long userId, UserDto.UpdateRequest request) {
         User user = findUser(userId);
-        user.update(request.username(), request.birthYear());
+        if (request.birthDate() == null) {
+            user.update(request.username(), request.birthYear());
+        } else {
+            user.update(request.username(), request.birthDate());
+        }
         return toResponse(user);
     }
 
@@ -99,7 +111,8 @@ public class UserService {
                 user.getUserId(),
                 user.getEmail(),
                 user.getUsername(),
-                user.getBirthYear()
+                user.getBirthYear(),
+                user.getBirthDate()
         );
     }
 }

@@ -2,6 +2,8 @@ package com.meta.foremeal.user.domain;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "users")
 public class User {
@@ -23,6 +25,9 @@ public class User {
     @Column(name = "birth_year")
     private Integer birthYear;
 
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
     private UserRole role;
@@ -35,6 +40,15 @@ public class User {
         this.password = password;
         this.username = username;
         this.birthYear = birthYear;
+        this.role = role;
+    }
+
+    public User(String email, String password, String username, LocalDate birthDate, UserRole role) {
+        this.email = email;
+        this.password = password;
+        this.username = username;
+        this.birthDate = birthDate;
+        this.birthYear = birthDate == null ? null : birthDate.getYear();
         this.role = role;
     }
 
@@ -58,6 +72,10 @@ public class User {
         return birthYear;
     }
 
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
     public UserRole getRole() {
         return role;
     }
@@ -65,6 +83,12 @@ public class User {
     public void update(String username, Integer birthYear) {
         this.username = username;
         this.birthYear = birthYear;
+    }
+
+    public void update(String username, LocalDate birthDate) {
+        this.username = username;
+        this.birthDate = birthDate;
+        this.birthYear = birthDate == null ? null : birthDate.getYear();
     }
 
     public void changePassword(String password) {

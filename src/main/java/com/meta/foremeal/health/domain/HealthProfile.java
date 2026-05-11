@@ -86,6 +86,12 @@ public class HealthProfile {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void updateBodyMeasurements(BigDecimal heightCm, BigDecimal weightKg) {
+        this.heightCm = heightCm;
+        this.weightKg = weightKg;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public Long getHealthProfileId() {
         return healthProfileId;
     }
