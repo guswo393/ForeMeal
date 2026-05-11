@@ -1,6 +1,8 @@
 package com.meta.foremeal.recipe.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -45,6 +47,7 @@ public class Recipe {
     @Column(name = "total_calories", precision = 10, scale = 2)
     private BigDecimal totalCalories;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "total_nutrients", columnDefinition = "jsonb")
     private String totalNutrients;
 
