@@ -24,8 +24,6 @@ public class UserDto {
             String username,
 
             @NotNull
-            Integer birthYear,
-
             @Past
             LocalDate birthDate
     ) {
@@ -37,8 +35,6 @@ public class UserDto {
             String username,
 
             @NotNull
-            Integer birthYear,
-
             @Past
             LocalDate birthDate
     ) {
