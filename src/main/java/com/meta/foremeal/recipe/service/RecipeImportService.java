@@ -27,15 +27,18 @@ public class RecipeImportService {
     private final RecipeRepository recipeRepository;
     private final ObjectMapper objectMapper;
     private final RecipeIngredientParser recipeIngredientParser;
+    private final RecipeIngredientFoodMatcher recipeIngredientFoodMatcher;
 
     public RecipeImportService(FoodSafetyRecipeClient foodSafetyRecipeClient,
                                RecipeRepository recipeRepository,
                                ObjectMapper objectMapper,
-                               RecipeIngredientParser recipeIngredientParser) {
+                               RecipeIngredientParser recipeIngredientParser,
+                               RecipeIngredientFoodMatcher recipeIngredientFoodMatcher) {
         this.foodSafetyRecipeClient = foodSafetyRecipeClient;
         this.recipeRepository = recipeRepository;
         this.objectMapper = objectMapper;
         this.recipeIngredientParser = recipeIngredientParser;
+        this.recipeIngredientFoodMatcher = recipeIngredientFoodMatcher;
     }
 
     @Transactional
@@ -83,10 +86,16 @@ public class RecipeImportService {
             List<ParsedIngredient> parsedIngredients = recipeIngredientParser.parse(ingredientInfo);
 
             if (parsedIngredients.isEmpty()) {
-                recipe.addIngredient(new RecipeIngredient(null, truncate(ingredientInfo, 255), null, null));
+                String ingredientName = truncate(ingredientInfo, 255);
+                recipe.addIngredient(new RecipeIngredient(
+                        recipeIngredientFoodMatcher.matchFoodId(ingredientName),
+                        ingredientName,
+                        null,
+                        null
+                ));
             } else {
                 parsedIngredients.forEach(ingredient -> recipe.addIngredient(new RecipeIngredient(
-                        null,
+                        recipeIngredientFoodMatcher.matchFoodId(ingredient.ingredientName()),
                         truncate(ingredient.ingredientName(), 255),
                         ingredient.quantity(),
                         ingredient.unit()

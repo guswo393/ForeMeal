@@ -1,6 +1,7 @@
 package com.meta.foremeal.foodmaster.service;
 
 import com.meta.foremeal.foodmaster.domain.FoodMasterEntity;
+import com.meta.foremeal.foodmaster.dto.FoodDto;
 import com.meta.foremeal.foodmaster.external.FoodSafetyFoodClient;
 import com.meta.foremeal.foodmaster.external.FoodSafetyFoodDto;
 import com.meta.foremeal.foodmaster.repo.FoodMasterRepository;
@@ -21,14 +22,15 @@ public class FoodService {
 
     //식품 검색
     @Transactional(readOnly = true)
-    public List<FoodMasterEntity> searchFoods(String name) {
-        return foodRepository.findByFoodNameContaining(name);
+    public List<FoodDto.Response> searchFoods(String name) {
+        return FoodDto.from(foodRepository.findByFoodNameContaining(name));
     }
 
     //식품 상세 조회 (id 기준)
     @Transactional(readOnly = true)
-    public FoodMasterEntity getFoodDetail(Long id) {
+    public FoodDto.Response getFoodDetail(Long id) {
         return foodRepository.findById(id)
+                .map(FoodDto.Response::from)
                 .orElseThrow(() -> new RuntimeException("식품 정보가 없습니다."));
     }
 
@@ -40,7 +42,7 @@ public class FoodService {
     }
 
     @Transactional
-    public ImportResult importFoodsFromFoodSafety(String foodName, int start, int end) {
+    public FoodDto.ImportResponse importFoodsFromFoodSafety(String foodName, int start, int end) {
         FoodSafetyFoodDto response = foodSafetyFoodClient.fetchByName(foodName, start, end);
         List<FoodSafetyFoodDto.Row> rows = response == null ? List.of() : response.rows();
 
@@ -73,7 +75,7 @@ public class FoodService {
             }
         }
 
-        return new ImportResult(rows.size(), imported, updated, skipped);
+        return new FoodDto.ImportResponse(rows.size(), imported, updated, skipped);
     }
 
     private void apply(FoodSafetyFoodDto.Row row, FoodMasterEntity food) {
@@ -102,12 +104,5 @@ public class FoodService {
         }
     }
 
-    public record ImportResult(
-            int fetched,
-            int imported,
-            int updated,
-            int skipped
-    ) {
-    }
 }
 
