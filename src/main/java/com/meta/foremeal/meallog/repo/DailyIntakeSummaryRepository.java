@@ -8,4 +8,5 @@ import java.util.Optional;
 
 public interface DailyIntakeSummaryRepository extends JpaRepository<DailyIntakeSummary, Long> {
     Optional<DailyIntakeSummary> findByUserIdAndSummaryDate(Long userId, LocalDate summaryDate);
+    void deleteByUserId(Long userId);
 }
