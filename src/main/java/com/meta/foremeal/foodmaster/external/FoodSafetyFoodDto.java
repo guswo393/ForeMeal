@@ -1,4 +1,4 @@
-package com.meta.foremeal.FoodMaster.external;
+package com.meta.foremeal.foodmaster.external;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

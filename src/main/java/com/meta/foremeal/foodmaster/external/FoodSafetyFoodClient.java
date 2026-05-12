@@ -1,4 +1,4 @@
-package com.meta.foremeal.FoodMaster.external;
+package com.meta.foremeal.foodmaster.external;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;

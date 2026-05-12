@@ -1,9 +1,9 @@
-package com.meta.foremeal.FoodMaster.service;
+package com.meta.foremeal.foodmaster.service;
 
-import com.meta.foremeal.FoodMaster.domain.FoodMasterEntity;
-import com.meta.foremeal.FoodMaster.external.FoodSafetyFoodClient;
-import com.meta.foremeal.FoodMaster.external.FoodSafetyFoodDto;
-import com.meta.foremeal.FoodMaster.repo.FoodMasterRepository;
+import com.meta.foremeal.foodmaster.domain.FoodMasterEntity;
+import com.meta.foremeal.foodmaster.external.FoodSafetyFoodClient;
+import com.meta.foremeal.foodmaster.external.FoodSafetyFoodDto;
+import com.meta.foremeal.foodmaster.repo.FoodMasterRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

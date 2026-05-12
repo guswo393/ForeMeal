@@ -1,7 +1,7 @@
-package com.meta.foremeal.FoodMaster.api;
+package com.meta.foremeal.foodmaster.api;
 
-import com.meta.foremeal.FoodMaster.domain.FoodMasterEntity;
-import com.meta.foremeal.FoodMaster.service.FoodService;
+import com.meta.foremeal.foodmaster.domain.FoodMasterEntity;
+import com.meta.foremeal.foodmaster.service.FoodService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

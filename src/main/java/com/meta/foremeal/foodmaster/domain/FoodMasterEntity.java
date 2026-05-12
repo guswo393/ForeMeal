@@ -1,4 +1,4 @@
-package com.meta.foremeal.FoodMaster.domain;
+package com.meta.foremeal.foodmaster.domain;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

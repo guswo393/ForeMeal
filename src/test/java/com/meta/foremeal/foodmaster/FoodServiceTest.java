@@ -1,10 +1,10 @@
-package com.meta.foremeal.FoodMaster;
+package com.meta.foremeal.foodmaster;
 
-import com.meta.foremeal.FoodMaster.domain.FoodMasterEntity;
-import com.meta.foremeal.FoodMaster.external.FoodSafetyFoodClient;
-import com.meta.foremeal.FoodMaster.external.FoodSafetyFoodDto;
-import com.meta.foremeal.FoodMaster.repo.FoodMasterRepository;
-import com.meta.foremeal.FoodMaster.service.FoodService;
+import com.meta.foremeal.foodmaster.domain.FoodMasterEntity;
+import com.meta.foremeal.foodmaster.external.FoodSafetyFoodClient;
+import com.meta.foremeal.foodmaster.external.FoodSafetyFoodDto;
+import com.meta.foremeal.foodmaster.repo.FoodMasterRepository;
+import com.meta.foremeal.foodmaster.service.FoodService;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
