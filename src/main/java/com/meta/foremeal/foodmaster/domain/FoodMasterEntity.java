@@ -26,6 +26,11 @@ public class FoodMasterEntity {
     @Column(nullable = false)
     private String foodName;
     private String category;
+    private String makerName;
+    private String researchYear;
+    private String subRefName;
+    private Double servingSize;
+    private String servingUnit;
 
     private Double calories;
     private Double carbs;
@@ -33,6 +38,9 @@ public class FoodMasterEntity {
     private Double fat;
     private Double sugar;
     private Double sodium;
+    private Double cholesterol;
+    private Double saturatedFat;
+    private Double transFat;
 
     @Column(name="gi_index")
     private Double giIndex;

@@ -17,7 +17,7 @@ public class FoodSafetyFoodClient {
 
     public FoodSafetyFoodClient(
             RestTemplateBuilder restTemplateBuilder,
-            @Value("${food-safety.food.base-url:http://openapi.foodsafetykorea.go.kr/api}") String baseUrl,
+            @Value("${food-safety.food.base-url:http://apis.data.go.kr/1471000/FoodNtrCpntDbInfo02/getFoodNtrCpntDbInq02}") String baseUrl,
             @Value("${food-safety.food.api-key:${food-safety.recipe.api-key:sample}}") String apiKey
     ) {
         this.restTemplate = restTemplateBuilder
@@ -30,9 +30,12 @@ public class FoodSafetyFoodClient {
 
     public FoodSafetyFoodDto fetchByName(String foodName, int start, int end) {
         String url = UriComponentsBuilder.fromUriString(baseUrl)
-                .path("/{apiKey}/I2790/json/{start}/{end}/DESC_KOR={foodName}")
-                .buildAndExpand(apiKey, start, end, foodName)
-                .encode()
+                .queryParam("serviceKey", apiKey)
+                .queryParam("pageNo", start)
+                .queryParam("numOfRows", Math.max(1, end - start + 1))
+                .queryParam("type", "json")
+                .queryParam("FOOD_NM_KR", foodName)
+                .build()
                 .toUriString();
 
         return restTemplate.getForObject(url, FoodSafetyFoodDto.class);

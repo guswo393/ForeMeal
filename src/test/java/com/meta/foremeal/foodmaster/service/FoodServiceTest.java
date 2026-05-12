@@ -40,12 +40,20 @@ public class FoodServiceTest {
         assertThat(saved.getSource()).isEqualTo("FOOD_SAFETY_KOREA");
         assertThat(saved.getFoodName()).isEqualTo("닭가슴살");
         assertThat(saved.getCategory()).isEqualTo("육류");
+        assertThat(saved.getMakerName()).isEqualTo("테스트식품");
+        assertThat(saved.getResearchYear()).isEqualTo("2025-01-23");
+        assertThat(saved.getSubRefName()).isEqualTo("식품의약품안전처");
+        assertThat(saved.getServingSize()).isEqualTo(100.0);
+        assertThat(saved.getServingUnit()).isEqualTo("g");
         assertThat(saved.getCalories()).isEqualTo(110.0);
         assertThat(saved.getCarbs()).isEqualTo(0.0);
         assertThat(saved.getProtein()).isEqualTo(23.0);
         assertThat(saved.getFat()).isEqualTo(1.5);
         assertThat(saved.getSugar()).isEqualTo(0.0);
         assertThat(saved.getSodium()).isEqualTo(55.0);
+        assertThat(saved.getCholesterol()).isEqualTo(60.0);
+        assertThat(saved.getSaturatedFat()).isEqualTo(0.4);
+        assertThat(saved.getTransFat()).isEqualTo(0.0);
     }
 
     private FoodMasterEntity captureSavedFood() {
@@ -69,14 +77,22 @@ public class FoodServiceTest {
     private FoodSafetyFoodDto.Row row(String foodCode, String foodName) {
         FoodSafetyFoodDto.Row row = new FoodSafetyFoodDto.Row();
         row.put("FOOD_CD", foodCode);
-        row.put("DESC_KOR", foodName);
-        row.put("GROUP_NAME", "육류");
-        row.put("NUTR_CONT1", "110");
-        row.put("NUTR_CONT2", "0");
-        row.put("NUTR_CONT3", "23");
-        row.put("NUTR_CONT4", "1.5");
-        row.put("NUTR_CONT5", "0");
-        row.put("NUTR_CONT6", "55");
+        row.put("FOOD_NM_KR", foodName);
+        row.put("FOOD_CAT1_NM", "육류");
+        row.put("MAKER_NM", "테스트식품");
+        row.put("RESEARCH_YMD", "2025-01-23");
+        row.put("SUB_REF_NAME", "식품의약품안전처");
+        row.put("SERVING_SIZE", "100");
+        row.put("SERVING_UNIT", "g");
+        row.put("AMT_NUM1", "110");
+        row.put("AMT_NUM7", "0");
+        row.put("AMT_NUM3", "23");
+        row.put("AMT_NUM4", "1.5");
+        row.put("AMT_NUM8", "0");
+        row.put("AMT_NUM14", "55");
+        row.put("AMT_NUM24", "60");
+        row.put("AMT_NUM23", "0.4");
+        row.put("AMT_NUM25", "0");
         return row;
     }
 }

@@ -83,12 +83,20 @@ public class FoodService {
         food.setSource(SOURCE_FOOD_SAFETY);
         food.setFoodName(row.foodName());
         food.setCategory(row.category());
+        food.setMakerName(row.makerName());
+        food.setResearchYear(row.researchYear());
+        food.setSubRefName(row.subRefName());
+        food.setServingSize(parseDouble(row.servingSize()));
+        food.setServingUnit(row.servingUnit());
         food.setCalories(parseDouble(row.calories()));
         food.setCarbs(parseDouble(row.carbs()));
         food.setProtein(parseDouble(row.protein()));
         food.setFat(parseDouble(row.fat()));
         food.setSugar(parseDouble(row.sugar()));
         food.setSodium(parseDouble(row.sodium()));
+        food.setCholesterol(parseDouble(row.cholesterol()));
+        food.setSaturatedFat(parseDouble(row.saturatedFat()));
+        food.setTransFat(parseDouble(row.transFat()));
     }
 
     private Double parseDouble(String value) {

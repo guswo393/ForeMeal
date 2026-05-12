@@ -12,12 +12,20 @@ public class FoodDto {
             String source,
             String foodName,
             String category,
+            String makerName,
+            String researchYear,
+            String subRefName,
+            Double servingSize,
+            String servingUnit,
             Double calories,
             Double carbs,
             Double protein,
             Double fat,
             Double sugar,
             Double sodium,
+            Double cholesterol,
+            Double saturatedFat,
+            Double transFat,
             Double giIndex
     ) {
         public static Response from(FoodMasterEntity food) {
@@ -27,12 +35,20 @@ public class FoodDto {
                     food.getSource(),
                     food.getFoodName(),
                     food.getCategory(),
+                    food.getMakerName(),
+                    food.getResearchYear(),
+                    food.getSubRefName(),
+                    food.getServingSize(),
+                    food.getServingUnit(),
                     food.getCalories(),
                     food.getCarbs(),
                     food.getProtein(),
                     food.getFat(),
                     food.getSugar(),
                     food.getSodium(),
+                    food.getCholesterol(),
+                    food.getSaturatedFat(),
+                    food.getTransFat(),
                     food.getGiIndex()
             );
         }
