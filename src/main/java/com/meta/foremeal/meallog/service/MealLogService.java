@@ -1,7 +1,7 @@
 package com.meta.foremeal.meallog.service;
 
-import com.meta.foremeal.FoodMaster.FoodMasterEntity;
-import com.meta.foremeal.FoodMaster.FoodMasterRepository;
+import com.meta.foremeal.FoodMaster.domain.FoodMasterEntity;
+import com.meta.foremeal.FoodMaster.repo.FoodMasterRepository;
 import com.meta.foremeal.meallog.api.dto.MealLogDto;
 import com.meta.foremeal.meallog.domain.DailyIntakeSummary;
 import com.meta.foremeal.meallog.domain.MealLog;

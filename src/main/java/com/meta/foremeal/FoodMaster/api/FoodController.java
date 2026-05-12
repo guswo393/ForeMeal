@@ -1,5 +1,7 @@
-package com.meta.foremeal.FoodMaster;
+package com.meta.foremeal.FoodMaster.api;
 
+import com.meta.foremeal.FoodMaster.domain.FoodMasterEntity;
+import com.meta.foremeal.FoodMaster.service.FoodService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,5 +24,15 @@ public class FoodController {
     @GetMapping("/{id}")
     public ResponseEntity<FoodMasterEntity> getDetail(@PathVariable Long id) {
         return ResponseEntity.ok(foodService.getFoodDetail(id));
+    }
+
+    //식품의약품안전처 식품영양성분 DB에서 식품 정보 가져오기
+    @PostMapping("/import/food-safety")
+    public ResponseEntity<FoodService.ImportResult> importFoodSafetyFoods(
+            @RequestParam String name,
+            @RequestParam(defaultValue = "1") int start,
+            @RequestParam(defaultValue = "20") int end
+    ) {
+        return ResponseEntity.ok(foodService.importFoodsFromFoodSafety(name, start, end));
     }
 }

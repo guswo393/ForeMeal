@@ -1,4 +1,4 @@
-package com.meta.foremeal.FoodMaster;
+package com.meta.foremeal.FoodMaster.domain;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,6 +17,11 @@ public class FoodMasterEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long foodId;
 
+    @Column(length = 100)
+    private String externalId;
+
+    @Column(length = 50)
+    private String source;
 
     @Column(nullable = false)
     private String foodName;

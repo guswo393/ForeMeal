@@ -1,5 +1,6 @@
-package com.meta.foremeal.FoodMaster;
+package com.meta.foremeal.FoodMaster.repo;
 
+import com.meta.foremeal.FoodMaster.domain.FoodMasterEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -10,4 +11,5 @@ public interface FoodMasterRepository extends JpaRepository<FoodMasterEntity, Lo
     List<FoodMasterEntity> findByFoodNameContaining(String foodName);
     //카테고리별 필터링
     List<FoodMasterEntity> findByCategory(String category);
+    Optional<FoodMasterEntity> findBySourceAndExternalId(String source, String externalId);
 }
