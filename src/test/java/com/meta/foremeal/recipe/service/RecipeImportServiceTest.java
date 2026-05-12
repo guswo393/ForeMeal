@@ -20,11 +20,13 @@ public class RecipeImportServiceTest {
 
     private final FoodSafetyRecipeClient foodSafetyRecipeClient = mock(FoodSafetyRecipeClient.class);
     private final RecipeRepository recipeRepository = mock(RecipeRepository.class);
+    private final RecipeIngredientFoodMatcher recipeIngredientFoodMatcher = mock(RecipeIngredientFoodMatcher.class);
     private final RecipeImportService recipeImportService = new RecipeImportService(
             foodSafetyRecipeClient,
             recipeRepository,
             new ObjectMapper(),
-            new RecipeIngredientParser()
+            new RecipeIngredientParser(),
+            recipeIngredientFoodMatcher
     );
 
     @Test
@@ -32,6 +34,7 @@ public class RecipeImportServiceTest {
         FoodSafetyRecipeDto response = response(row("1001", "chicken salad"));
         when(foodSafetyRecipeClient.fetch(1, 1)).thenReturn(response);
         when(recipeRepository.existsBySourceAndExternalId("FOOD_SAFETY_KOREA", "1001")).thenReturn(false);
+        when(recipeIngredientFoodMatcher.matchFoodId("chicken breast")).thenReturn(1L);
         when(recipeRepository.save(any(Recipe.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         RecipeImportService.ImportResult result = recipeImportService.importFoodSafetyRecipes(1, 1);
@@ -49,6 +52,7 @@ public class RecipeImportServiceTest {
         assertThat(saved.getTitle()).isEqualTo("chicken salad");
         assertThat(saved.getTotalCalories()).isEqualByComparingTo("350");
         assertThat(saved.getIngredients()).hasSize(2);
+        assertThat(saved.getIngredients().get(0).getFoodId()).isEqualTo(1L);
         assertThat(saved.getIngredients().get(0).getIngredientName()).isEqualTo("chicken breast");
         assertThat(saved.getIngredients().get(0).getQuantity()).isEqualByComparingTo("100");
         assertThat(saved.getIngredients().get(0).getUnit()).isEqualTo("g");

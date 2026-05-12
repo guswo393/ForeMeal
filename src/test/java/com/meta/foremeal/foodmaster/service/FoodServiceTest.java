@@ -1,10 +1,10 @@
-package com.meta.foremeal.foodmaster;
+package com.meta.foremeal.foodmaster.service;
 
 import com.meta.foremeal.foodmaster.domain.FoodMasterEntity;
+import com.meta.foremeal.foodmaster.dto.FoodDto;
 import com.meta.foremeal.foodmaster.external.FoodSafetyFoodClient;
 import com.meta.foremeal.foodmaster.external.FoodSafetyFoodDto;
 import com.meta.foremeal.foodmaster.repo.FoodMasterRepository;
-import com.meta.foremeal.foodmaster.service.FoodService;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
@@ -28,7 +28,7 @@ public class FoodServiceTest {
         when(foodRepository.findBySourceAndExternalId("FOOD_SAFETY_KOREA", "F001")).thenReturn(Optional.empty());
         when(foodRepository.save(any(FoodMasterEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        FoodService.ImportResult result = foodService.importFoodsFromFoodSafety("닭가슴살", 1, 1);
+        FoodDto.ImportResponse result = foodService.importFoodsFromFoodSafety("닭가슴살", 1, 1);
 
         assertThat(result.fetched()).isEqualTo(1);
         assertThat(result.imported()).isEqualTo(1);
