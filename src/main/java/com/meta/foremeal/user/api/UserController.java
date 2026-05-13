@@ -4,7 +4,9 @@ import com.meta.foremeal.global.security.principal.CustomUserPrincipal;
 import com.meta.foremeal.user.dto.UserDto;
 import com.meta.foremeal.user.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -37,5 +39,12 @@ public class UserController {
     public void changePassword(@AuthenticationPrincipal CustomUserPrincipal principal,
                                @RequestBody @Valid UserDto.ChangePasswordRequest request) {
         userService.changePassword(principal.getUserId(), request);
+    }
+
+    @DeleteMapping("/me")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteMe(@AuthenticationPrincipal CustomUserPrincipal principal,
+                         @RequestBody @Valid UserDto.DeleteRequest request) {
+        userService.delete(principal.getUserId(), request);
     }
 }
