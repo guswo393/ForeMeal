@@ -28,17 +28,20 @@ public class RecipeImportService {
     private final ObjectMapper objectMapper;
     private final RecipeIngredientParser recipeIngredientParser;
     private final RecipeIngredientFoodMatcher recipeIngredientFoodMatcher;
+    private final GiLevelEstimator giLevelEstimator;
 
     public RecipeImportService(FoodSafetyRecipeClient foodSafetyRecipeClient,
                                RecipeRepository recipeRepository,
                                ObjectMapper objectMapper,
                                RecipeIngredientParser recipeIngredientParser,
-                               RecipeIngredientFoodMatcher recipeIngredientFoodMatcher) {
+                               RecipeIngredientFoodMatcher recipeIngredientFoodMatcher,
+                               GiLevelEstimator giLevelEstimator) {
         this.foodSafetyRecipeClient = foodSafetyRecipeClient;
         this.recipeRepository = recipeRepository;
         this.objectMapper = objectMapper;
         this.recipeIngredientParser = recipeIngredientParser;
         this.recipeIngredientFoodMatcher = recipeIngredientFoodMatcher;
+        this.giLevelEstimator = giLevelEstimator;
     }
 
     @Transactional
@@ -109,6 +112,8 @@ public class RecipeImportService {
                 recipe.addStep(new RecipeStep(i, instruction, row.manualImage(i)));
             }
         }
+
+        recipe.updateGiLevel(giLevelEstimator.estimate(recipe.getIngredients()));
 
         return recipe;
     }

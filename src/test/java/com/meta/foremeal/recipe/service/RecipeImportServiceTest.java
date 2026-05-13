@@ -21,12 +21,14 @@ public class RecipeImportServiceTest {
     private final FoodSafetyRecipeClient foodSafetyRecipeClient = mock(FoodSafetyRecipeClient.class);
     private final RecipeRepository recipeRepository = mock(RecipeRepository.class);
     private final RecipeIngredientFoodMatcher recipeIngredientFoodMatcher = mock(RecipeIngredientFoodMatcher.class);
+    private final GiLevelEstimator giLevelEstimator = mock(GiLevelEstimator.class);
     private final RecipeImportService recipeImportService = new RecipeImportService(
             foodSafetyRecipeClient,
             recipeRepository,
             new ObjectMapper(),
             new RecipeIngredientParser(),
-            recipeIngredientFoodMatcher
+            recipeIngredientFoodMatcher,
+            giLevelEstimator
     );
 
     @Test
@@ -35,6 +37,7 @@ public class RecipeImportServiceTest {
         when(foodSafetyRecipeClient.fetch(1, 1)).thenReturn(response);
         when(recipeRepository.existsBySourceAndExternalId("FOOD_SAFETY_KOREA", "1001")).thenReturn(false);
         when(recipeIngredientFoodMatcher.matchFoodId("chicken breast")).thenReturn(1L);
+        when(giLevelEstimator.estimate(any())).thenReturn("LOW");
         when(recipeRepository.save(any(Recipe.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         RecipeImportService.ImportResult result = recipeImportService.importFoodSafetyRecipes(1, 1);
@@ -51,6 +54,7 @@ public class RecipeImportServiceTest {
         assertThat(saved.getSource()).isEqualTo("FOOD_SAFETY_KOREA");
         assertThat(saved.getTitle()).isEqualTo("chicken salad");
         assertThat(saved.getTotalCalories()).isEqualByComparingTo("350");
+        assertThat(saved.getGiLevel()).isEqualTo("LOW");
         assertThat(saved.getIngredients()).hasSize(2);
         assertThat(saved.getIngredients().get(0).getFoodId()).isEqualTo(1L);
         assertThat(saved.getIngredients().get(0).getIngredientName()).isEqualTo("chicken breast");
