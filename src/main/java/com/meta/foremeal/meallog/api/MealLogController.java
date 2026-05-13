@@ -26,6 +26,19 @@ public class MealLogController {
         return mealLogService.create(principal.getUserId(), req);
     }
 
+    @PutMapping("/{mealId}")
+    public MealLogDto.Response update(@AuthenticationPrincipal CustomUserPrincipal principal,
+                                      @PathVariable Long mealId,
+                                      @RequestBody @Valid MealLogDto.CreateRequest req) {
+        return mealLogService.update(principal.getUserId(), mealId, req);
+    }
+
+    @DeleteMapping("/{mealId}")
+    public void delete(@AuthenticationPrincipal CustomUserPrincipal principal,
+                       @PathVariable Long mealId) {
+        mealLogService.delete(principal.getUserId(), mealId);
+    }
+
     @GetMapping("/daily")
     public List<MealLogDto.Response> getDaily(@AuthenticationPrincipal CustomUserPrincipal principal,
                                               @RequestParam String date) {

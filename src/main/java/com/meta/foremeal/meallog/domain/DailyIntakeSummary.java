@@ -53,6 +53,14 @@ public class DailyIntakeSummary {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void updateTotals(BigDecimal calories, BigDecimal sodium, BigDecimal sugar, BigDecimal carbs) {
+        this.totalCalories = nz(calories);
+        this.totalSodium = nz(sodium);
+        this.totalSugar = nz(sugar);
+        this.totalCarbs = nz(carbs);
+        this.updatedAt = LocalDateTime.now();
+    }
+
     private BigDecimal nz(BigDecimal v) {
         return v == null ? BigDecimal.ZERO : v;
     }
