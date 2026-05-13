@@ -1,0 +1,15 @@
+spring.datasource.url=jdbc:postgresql://localhost:5432/healthcare_db
+spring.datasource.username=user
+spring.datasource.password=password
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+
+food-safety.recipe.base-url=http://openapi.foodsafetykorea.go.kr/api
+food-safety.recipe.api-key=${FOOD_SAFETY_API_KEY:sample}
+
+food-safety.food.base-url=http://apis.data.go.kr/1471000/FoodNtrCpntDbInfo02/getFoodNtrCpntDbInq02
+food-safety.food.api-key=${FOOD_SAFETY_API_KEY:sample}
