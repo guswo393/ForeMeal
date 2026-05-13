@@ -115,7 +115,7 @@ public class RecipeImportService {
 
     private String buildDescription(FoodSafetyRecipeDto.Row row) {
         String hashTag = row.hashTag();
-        return hashTag == null ? "식품의약품안전처 조리식품의 레시피 DB에서 가져온 레시피입니다." : hashTag;
+        return hashTag == null ? "식품의약품안전처 공개 레시피를 바탕으로 정리한 레시피입니다." : hashTag;
     }
 
     private String toNutrientsJson(FoodSafetyRecipeDto.Row row) {

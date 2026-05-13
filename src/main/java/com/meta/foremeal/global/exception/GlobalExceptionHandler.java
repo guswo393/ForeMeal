@@ -66,7 +66,7 @@ public class GlobalExceptionHandler {
 
         FieldError fieldError = e.getBindingResult().getFieldError();
         if (fieldError != null) {
-            message = fieldError.getField() + ": " + fieldError.getDefaultMessage();
+            message = fieldError.getDefaultMessage();
         }
 
         return ResponseEntity
