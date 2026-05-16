@@ -1,6 +1,6 @@
-package com.meta.foremeal.Pantry.repository;
+package com.meta.foremeal.pantry.repository;
 
-import com.meta.foremeal.Pantry.domain.PantryItem;
+import com.meta.foremeal.pantry.domain.PantryItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

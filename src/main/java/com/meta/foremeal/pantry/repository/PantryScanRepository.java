@@ -1,6 +1,6 @@
-package com.meta.foremeal.Pantry.repository;
+package com.meta.foremeal.pantry.repository;
 
-import com.meta.foremeal.Pantry.domain.PantryScan;
+import com.meta.foremeal.pantry.domain.PantryScan;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
