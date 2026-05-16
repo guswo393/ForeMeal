@@ -5,8 +5,11 @@ import com.meta.foremeal.meallog.api.dto.PredictionResponse;
 import com.meta.foremeal.meallog.domain.GlucosePrediction;
 import com.meta.foremeal.meallog.repo.GlucosePredictionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -14,22 +17,18 @@ public class GlucosePredictionService {
     private final RestTemplate restTemplate;
     private final GlucosePredictionRepository repository;
 
+    @Value("${foremeal.ai-server-url:http://localhost:8000}")
+    private String aiServerUrl;
+
     public PredictionResponse predictAndSave(PredictionRequest request) {
-        String pythonUrl = "http://localhost:8000/predict";
+        return restTemplate.postForObject(
+                aiServerUrl + "/predict/glucose",
+                request,
+                PredictionResponse.class
+        );
+    }
 
-        // 1. Python 서버 연동
-        PredictionResponse response = restTemplate.postForObject(pythonUrl, request, PredictionResponse.class);
-
-        // 2. 결과 저장
-        if (response != null) {
-            GlucosePrediction entity = GlucosePrediction.builder()
-                    .userId(request.getUserId())
-                    .predictedPeak(response.getPredictedPeak())
-                    .riskLevel(response.getRiskLevel())
-                    .predictionCurve(response.getPredictionCurve().toString())
-                    .build();
-            repository.save(entity);
-        }
-        return response;
+    public List<GlucosePrediction> getRecentPredictions(Long userId) {
+        return repository.findTop20ByUserIdOrderByCreatedAtDesc(userId);
     }
 }

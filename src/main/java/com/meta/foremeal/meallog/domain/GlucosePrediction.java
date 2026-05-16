@@ -2,9 +2,11 @@ package com.meta.foremeal.meallog.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "glucose_prediction")
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -13,29 +15,27 @@ public class GlucosePrediction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "prediction_id")
+    private Long predictionId;
 
-    // 어떤 사용자의 데이터인지 식별
-    @Column(nullable = false)
+    @Column(name = "meal_id")
+    private Long mealId;
+
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    // Python 모델이 예측한 최고 혈당치
-    private Double predictedPeak;
+    @Column(name = "food_id")
+    private Long foodId;
 
-    // 위험도 상태 (정상, 주의, 위험 등)
+    @Column(name = "model_version", length = 50)
+    private String modelVersion;
+
+    @Column(name = "pred_1h_mgdl")
+    private Integer pred1hMgdl;
+
+    @Column(name = "risk_level", length = 20)
     private String riskLevel;
 
-    // 식후 2시간 혈당 곡선 (데이터가 많으므로 길게 설정)
-    // List 형태를 JSON 문자열로 변환해서 저장하기 위해 Lob 혹은 length 지정
-    @Column(columnDefinition = "TEXT")
-    private String predictionCurve;
-
-    // 예측이 생성된 시간
+    @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    // 생성 시 자동으로 시간을 기록하기 위한 설정
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-    }
 }

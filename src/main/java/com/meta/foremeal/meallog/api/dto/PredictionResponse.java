@@ -3,6 +3,7 @@ package com.meta.foremeal.meallog.api.dto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
 import java.util.List;
 import java.util.Map;
 
@@ -10,8 +11,17 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PredictionResponse {
-    private Double predictedPeak;      // 예상 피크 혈당
-    private String riskLevel;          // 위험도 레벨 (정상, 주의, 위험)
-    private List<Double> predictionCurve; // 식후 2시간 예측 곡선 데이터
-    private String evidenceSummary;    // 예측 근거 요약
+    private Long predictionId;
+    private Long dailySummaryId;
+    private Long userId;
+    private Long mealId;
+    private Long foodId;
+    private String modelVersion;
+    private Integer pred1hMgdl;
+    private Double predictedPeak;
+    private Integer predictedSystolicBp;
+    private Integer predictedDiastolicBp;
+    private String riskLevel;
+    private List<Map<String, Object>> predictionCurve;
+    private String evidenceSummary;
 }

@@ -42,7 +42,12 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/users").permitAll()
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/api/users",
+                                "/api/v1/predict/**"
+                        ).permitAll()
+
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
