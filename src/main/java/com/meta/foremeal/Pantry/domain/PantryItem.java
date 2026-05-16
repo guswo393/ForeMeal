@@ -58,6 +58,9 @@ public class PantryItem {
     @Column(name = "custom_sodium_per_100g")
     private Double customSodiumPer100g;
 
+    @Column(name = "custom_carbs_per_100g")
+    private Double customCarbsPer100g;
+
     @Column(name = "custom_gi_index")
     private Double customGiIndex;
 
@@ -65,7 +68,7 @@ public class PantryItem {
     public PantryItem(Long userId, FoodMasterEntity foodMaster, String displayName, Double quantity, String unit,
                       LocalDate expirationDate, String storageType, String memo, PantryScan pantryScan,
                       String customName, Double customCaloriesPer100g, Double customSugarPer100g,
-                      Double customSodiumPer100g, Double customGiIndex) {
+                      Double customSodiumPer100g, Double customCarbsPer100g, Double customGiIndex) {
         this.userId = userId;
         this.foodMaster = foodMaster;
         this.displayName = displayName;
@@ -79,6 +82,7 @@ public class PantryItem {
         this.customCaloriesPer100g = customCaloriesPer100g;
         this.customSugarPer100g = customSugarPer100g;
         this.customSodiumPer100g = customSodiumPer100g;
+        this.customCarbsPer100g = customCarbsPer100g;
         this.customGiIndex = customGiIndex;
     }
 }
