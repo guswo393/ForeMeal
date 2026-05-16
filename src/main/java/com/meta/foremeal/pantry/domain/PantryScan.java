@@ -1,4 +1,4 @@
-package com.meta.foremeal.Pantry.domain;
+package com.meta.foremeal.pantry.domain;
 
 import com.meta.foremeal.user.domain.User;
 import jakarta.persistence.*;

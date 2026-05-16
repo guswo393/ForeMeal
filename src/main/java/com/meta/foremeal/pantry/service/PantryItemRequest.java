@@ -1,4 +1,4 @@
-package com.meta.foremeal.Pantry.service;
+package com.meta.foremeal.pantry.service;
 
 import lombok.Getter;
 import lombok.Setter;

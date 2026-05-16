@@ -1,9 +1,9 @@
-package com.meta.foremeal.Pantry.service;
+package com.meta.foremeal.pantry.service;
 
-import com.meta.foremeal.Pantry.domain.PantryItem;
-import com.meta.foremeal.Pantry.domain.PantryScan;
-import com.meta.foremeal.Pantry.repository.PantryItemRepository;
-import com.meta.foremeal.Pantry.repository.PantryScanRepository;
+import com.meta.foremeal.pantry.domain.PantryItem;
+import com.meta.foremeal.pantry.domain.PantryScan;
+import com.meta.foremeal.pantry.repository.PantryItemRepository;
+import com.meta.foremeal.pantry.repository.PantryScanRepository;
 import com.meta.foremeal.foodmaster.domain.FoodMasterEntity;
 import com.meta.foremeal.foodmaster.repo.FoodMasterRepository;
 import lombok.RequiredArgsConstructor;

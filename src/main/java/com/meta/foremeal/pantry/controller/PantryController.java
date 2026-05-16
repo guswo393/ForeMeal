@@ -1,8 +1,8 @@
-package com.meta.foremeal.Pantry.controller;
+package com.meta.foremeal.pantry.controller;
 
-import com.meta.foremeal.Pantry.service.PantryItemRequest;
-import com.meta.foremeal.Pantry.service.PantryItemResponse;
-import com.meta.foremeal.Pantry.service.PantryService;
+import com.meta.foremeal.pantry.service.PantryItemRequest;
+import com.meta.foremeal.pantry.service.PantryItemResponse;
+import com.meta.foremeal.pantry.service.PantryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

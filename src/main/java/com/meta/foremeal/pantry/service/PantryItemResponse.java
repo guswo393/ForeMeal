@@ -1,6 +1,6 @@
-package com.meta.foremeal.Pantry.service;
+package com.meta.foremeal.pantry.service;
 
-import com.meta.foremeal.Pantry.domain.PantryItem;
+import com.meta.foremeal.pantry.domain.PantryItem;
 import lombok.Getter;
 import java.time.LocalDate;
 
