@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -53,16 +54,36 @@ public class MealLogService {
         }
 
         MealLog saved = mealLogRepository.save(mealLog);
-
-        LocalDate date = req.eatenAt().toLocalDate();
-        DailyIntakeSummary summary = summaryRepository
-                .findByUserIdAndSummaryDate(loginUserId, date)
-                .orElseGet(() -> summaryRepository.save(new DailyIntakeSummary(loginUserId, date)));
-
-        Nutrients nutrients = calculateNutrients(saved.getItems());
-        summary.add(nutrients.calories, nutrients.sodium, nutrients.sugar, nutrients.carbs);
+        recalculateDailySummary(loginUserId, req.eatenAt().toLocalDate());
 
         return toResponse(saved);
+    }
+
+    @Transactional
+    public MealLogDto.Response update(Long loginUserId, Long mealId, MealLogDto.CreateRequest req) {
+        MealLog mealLog = findMyMealLog(loginUserId, mealId);
+        LocalDate oldDate = mealLog.getEatenAt().toLocalDate();
+        LocalDate newDate = req.eatenAt().toLocalDate();
+
+        mealLog.update(req.eatenAt(), req.notes(), req.source(), req.recipeId());
+        mealLog.replaceItems(toItems(loginUserId, req.items()));
+
+        recalculateDailySummary(loginUserId, oldDate);
+        if (!oldDate.equals(newDate)) {
+            recalculateDailySummary(loginUserId, newDate);
+        }
+
+        return toResponse(mealLog);
+    }
+
+    @Transactional
+    public void delete(Long loginUserId, Long mealId) {
+        MealLog mealLog = findMyMealLog(loginUserId, mealId);
+        LocalDate date = mealLog.getEatenAt().toLocalDate();
+
+        mealLogRepository.delete(mealLog);
+        mealLogRepository.flush();
+        recalculateDailySummary(loginUserId, date);
     }
 
     @Transactional(readOnly = true)
@@ -114,10 +135,44 @@ public class MealLogService {
         );
     }
 
-    /**
-     * 지금은 누적 구조만 완성하는 단계라 최소 구현:
-     * - FoodMaster 연동되면 여기에서 foodId + quantity로 영양값 계산해서 반환하면 됨
-     */
+    private MealLog findMyMealLog(Long loginUserId, Long mealId) {
+        return mealLogRepository.findByMealIdAndUserId(mealId, loginUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Meal log not found. mealId=" + mealId));
+    }
+
+    private List<MealLogItem> toItems(Long loginUserId, List<MealLogDto.ItemRequest> itemRequests) {
+        List<MealLogItem> items = new ArrayList<>();
+        for (MealLogDto.ItemRequest it : itemRequests) {
+            items.add(new MealLogItem(
+                    loginUserId,
+                    it.foodId(),
+                    it.foodName(),
+                    it.quantity(),
+                    it.unit()
+            ));
+        }
+        return items;
+    }
+
+    private void recalculateDailySummary(Long loginUserId, LocalDate date) {
+        List<MealLog> mealLogs = mealLogRepository.findByUserIdAndEatenAtBetweenOrderByEatenAtAsc(
+                loginUserId,
+                date.atStartOfDay(),
+                date.plusDays(1).atStartOfDay()
+        );
+
+        Nutrients total = new Nutrients(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+        for (MealLog mealLog : mealLogs) {
+            total = total.add(calculateNutrients(mealLog.getItems()));
+        }
+
+        DailyIntakeSummary summary = summaryRepository
+                .findByUserIdAndSummaryDate(loginUserId, date)
+                .orElseGet(() -> summaryRepository.save(new DailyIntakeSummary(loginUserId, date)));
+
+        summary.updateTotals(total.calories, total.sodium, total.sugar, total.carbs);
+    }
+
     private Nutrients calculateNutrients(List<MealLogItem> items) {
         Nutrients total = new Nutrients(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
 
@@ -145,11 +200,11 @@ public class MealLogService {
         BigDecimal quantity = item.getQuantity() == null ? BigDecimal.ZERO : item.getQuantity();
         String unit = item.getUnit() == null ? "" : item.getUnit().trim().toLowerCase();
 
-        if (unit.equals("g") || unit.equals("gram") || unit.equals("grams") || unit.equals("그램")) {
+        if (unit.equals("g") || unit.equals("gram") || unit.equals("grams")) {
             return quantity.divide(BigDecimal.valueOf(100));
         }
 
-        if (unit.equals("kg") || unit.equals("kilogram") || unit.equals("kilograms") || unit.equals("킬로그램")) {
+        if (unit.equals("kg") || unit.equals("kilogram") || unit.equals("kilograms")) {
             return quantity.multiply(BigDecimal.TEN);
         }
 
