@@ -126,6 +126,10 @@ public class Recipe {
         steps.forEach(this::addStep);
     }
 
+    public void updateGiLevel(String giLevel) {
+        this.giLevel = giLevel;
+    }
+
     public Long getRecipeId() { return recipeId; }
     public String getTitle() { return title; }
     public String getExternalId() { return externalId; }

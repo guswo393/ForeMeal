@@ -66,12 +66,19 @@ public class GlobalExceptionHandler {
 
         FieldError fieldError = e.getBindingResult().getFieldError();
         if (fieldError != null) {
-            message = fieldError.getField() + ": " + fieldError.getDefaultMessage();
+            message = fieldError.getDefaultMessage();
         }
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.of("VALIDATION_ERROR", message));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of("BAD_REQUEST", e.getMessage()));
     }
 
     @ExceptionHandler(AuthenticationException.class)

@@ -31,7 +31,7 @@ public class FoodService {
     public FoodDto.Response getFoodDetail(Long id) {
         return foodRepository.findById(id)
                 .map(FoodDto.Response::from)
-                .orElseThrow(() -> new RuntimeException("식품 정보가 없습니다."));
+                .orElseThrow(() -> new RuntimeException("요청한 식품 정보를 찾을 수 없습니다."));
     }
 
     //식약처 API로부터 받아온 데이터 저장
