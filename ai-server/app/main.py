@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 from app.detector import detect_items
 from app.schemas import PredictRequest, PredictResponse
@@ -13,4 +13,7 @@ def health() -> dict[str, str]:
 
 @app.post("/predict", response_model=PredictResponse)
 def predict(request: PredictRequest) -> PredictResponse:
-    return PredictResponse(items=detect_items(request.imageUrl))
+    try:
+        return PredictResponse(items=detect_items(request.imageUrl))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc

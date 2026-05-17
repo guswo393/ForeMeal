@@ -7,7 +7,6 @@ class PredictRequest(BaseModel):
 
 class DetectedItem(BaseModel):
     name: str
-    quantity: float = Field(default=1.0, ge=0)
     confidence: float = Field(ge=0, le=1)
 
 

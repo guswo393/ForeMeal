@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +36,7 @@ public class PantryService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Transactional
-    public List<PantryItemResponse> scanImage(Long userId, String imageUrl) {
+    public List<PantryScanItemResponse> scanImage(Long userId, String imageUrl) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
@@ -58,7 +57,6 @@ public class PantryService {
         HttpEntity<Map<String, String>> entity = new HttpEntity<>(aiRequest, headers);
 
         String aiServerUrl = "http://localhost:8000/predict";
-        List<PantryItemResponse> responses = new ArrayList<>();
 
         try {
             ResponseEntity<PantryDetectionResponse> aiResponse = restTemplate.exchange(
@@ -71,24 +69,22 @@ public class PantryService {
             PantryDetectionResponse aiResults = aiResponse.getBody();
 
             if (aiResults != null && aiResults.getItems() != null) {
-                responses = aiResults.getItems().stream()
-                        .map(result -> PantryItemResponse.builder()
-                                .scanId(pantryScan.getScanId())
-                                .displayName(result.getName())
-                                .quantity(result.getQuantity() != null ? result.getQuantity() : 1.0)
-                                .confidence(result.getConfidence())
-                                .expirationDate(null)
-                                .build())
-                        .collect(Collectors.toList());
-
                 pantryScan.updateScanResult("SUCCESS", null, null);
+
+                return aiResults.getItems().stream()
+                        .map(result -> new PantryScanItemResponse(
+                                pantryScan.getScanId(),
+                                result.getName(),
+                                result.getConfidence()
+                        ))
+                        .collect(Collectors.toList());
             }
         } catch (Exception e) {
             pantryScan.updateScanResult("FAILED", null, e.getMessage());
             throw new IllegalStateException("AI 분석 서버와의 통신에 실패했습니다: " + e.getMessage());
         }
 
-        return responses;
+        return List.of();
     }
 
     @Transactional

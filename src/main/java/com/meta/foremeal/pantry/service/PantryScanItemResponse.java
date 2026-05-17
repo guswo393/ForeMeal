@@ -1,11 +1,12 @@
 package com.meta.foremeal.pantry.service;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
-@Setter
-public class DetectedPantryItem {
+@AllArgsConstructor
+public class PantryScanItemResponse {
+    private Long scanId;
     private String name;
     private Double confidence;
 }

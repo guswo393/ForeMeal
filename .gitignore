@@ -9,6 +9,7 @@ application.properties
 pg_data/
 __pycache__/
 *.pyc
+*.pt
 
 ### STS ###
 .apt_generated

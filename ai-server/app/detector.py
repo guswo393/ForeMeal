@@ -1,9 +1,80 @@
+import os
+from collections import defaultdict
+from io import BytesIO
+
+import requests
+from PIL import Image
+
 from app.schemas import DetectedItem
+
+MODEL_NAME = os.getenv("YOLO_MODEL", "yolo11n.pt")
+CONFIDENCE_THRESHOLD = float(os.getenv("YOLO_CONFIDENCE", "0.25"))
+
+INGREDIENT_NAME_MAP = {
+    "apple": "apple",
+    "banana": "banana",
+    "orange": "orange",
+    "broccoli": "broccoli",
+    "carrot": "carrot",
+    "bowl": "bowl",
+    "bottle": "bottle",
+    "cup": "cup",
+    "sandwich": "sandwich",
+    "hot dog": "hot dog",
+    "pizza": "pizza",
+    "donut": "donut",
+    "cake": "cake",
+}
+
+_model = None
+
+
+def _get_model():
+    global _model
+    if _model is None:
+        from ultralytics import YOLO
+
+        _model = YOLO(MODEL_NAME)
+    return _model
+
+
+def _load_image(image_url: str) -> Image.Image:
+    response = requests.get(
+        image_url,
+        headers={"User-Agent": "ForeMeal-AI/0.1"},
+        timeout=15,
+    )
+    response.raise_for_status()
+    content_type = response.headers.get("content-type", "")
+    if "image" not in content_type.lower():
+        raise ValueError(f"URL did not return an image. content-type={content_type}")
+    return Image.open(BytesIO(response.content)).convert("RGB")
 
 
 def detect_items(image_url: str) -> list[DetectedItem]:
-    # Placeholder until the YOLO model is connected.
+    image = _load_image(image_url)
+    model = _get_model()
+    results = model.predict(image, conf=CONFIDENCE_THRESHOLD, verbose=False)
+
+    detected: dict[str, list[float]] = defaultdict(list)
+
+    for result in results:
+        names = result.names
+        for box in result.boxes:
+            class_id = int(box.cls[0])
+            confidence = float(box.conf[0])
+            raw_name = names[class_id]
+            ingredient_name = INGREDIENT_NAME_MAP.get(raw_name)
+
+            if ingredient_name is None:
+                continue
+
+            detected[ingredient_name].append(confidence)
+
     return [
-        DetectedItem(name="egg", quantity=1.0, confidence=0.91),
-        DetectedItem(name="milk", quantity=1.0, confidence=0.84),
+        DetectedItem(
+            name=name,
+            confidence=max(confidences),
+        )
+        for name, confidences in detected.items()
     ]
