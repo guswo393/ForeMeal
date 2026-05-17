@@ -7,6 +7,9 @@ import lombok.Getter;
 @AllArgsConstructor
 public class PantryScanItemResponse {
     private Long scanId;
-    private String name;
+    private String detectedName;
+    private String displayName;
+    private Long foodId;
     private Double confidence;
+    private boolean matched;
 }

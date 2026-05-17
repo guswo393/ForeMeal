@@ -10,22 +10,6 @@ from app.schemas import DetectedItem
 MODEL_NAME = os.getenv("YOLO_MODEL", "yolo11n.pt")
 CONFIDENCE_THRESHOLD = float(os.getenv("YOLO_CONFIDENCE", "0.25"))
 
-INGREDIENT_NAME_MAP = {
-    "apple": "apple",
-    "banana": "banana",
-    "orange": "orange",
-    "broccoli": "broccoli",
-    "carrot": "carrot",
-    "bowl": "bowl",
-    "bottle": "bottle",
-    "cup": "cup",
-    "sandwich": "sandwich",
-    "hot dog": "hot dog",
-    "pizza": "pizza",
-    "donut": "donut",
-    "cake": "cake",
-}
-
 _model = None
 
 
@@ -63,13 +47,7 @@ def detect_items(image_url: str) -> list[DetectedItem]:
         for box in result.boxes:
             class_id = int(box.cls[0])
             confidence = float(box.conf[0])
-            raw_name = names[class_id]
-            ingredient_name = INGREDIENT_NAME_MAP.get(raw_name)
-
-            if ingredient_name is None:
-                continue
-
-            detected[ingredient_name].append(confidence)
+            detected[names[class_id]].append(confidence)
 
     return [
         DetectedItem(

@@ -72,11 +72,7 @@ public class PantryService {
                 pantryScan.updateScanResult("SUCCESS", null, null);
 
                 return aiResults.getItems().stream()
-                        .map(result -> new PantryScanItemResponse(
-                                pantryScan.getScanId(),
-                                result.getName(),
-                                result.getConfidence()
-                        ))
+                        .map(result -> toScanItemResponse(pantryScan.getScanId(), result))
                         .collect(Collectors.toList());
             }
         } catch (Exception e) {
@@ -85,6 +81,33 @@ public class PantryService {
         }
 
         return List.of();
+    }
+
+    private PantryScanItemResponse toScanItemResponse(Long scanId, DetectedPantryItem detectedItem) {
+        FoodMasterEntity matchedFood = foodMasterRepository.findByFoodNameContainingIgnoreCase(detectedItem.getName())
+                .stream()
+                .findFirst()
+                .orElse(null);
+
+        if (matchedFood == null) {
+            return new PantryScanItemResponse(
+                    scanId,
+                    detectedItem.getName(),
+                    detectedItem.getName(),
+                    null,
+                    detectedItem.getConfidence(),
+                    false
+            );
+        }
+
+        return new PantryScanItemResponse(
+                scanId,
+                detectedItem.getName(),
+                matchedFood.getFoodName(),
+                matchedFood.getFoodId(),
+                detectedItem.getConfidence(),
+                true
+        );
     }
 
     @Transactional
