@@ -1,5 +1,6 @@
-package com.meta.foremeal.FoodMaster;
+package com.meta.foremeal.foodmaster.repo;
 
+import com.meta.foremeal.foodmaster.domain.FoodMasterEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
