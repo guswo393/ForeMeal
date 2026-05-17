@@ -48,6 +48,13 @@ public class MealLog {
         this.items.add(item);
     }
 
+    public void replaceItems(List<MealLogItem> newItems) {
+        this.items.clear();
+        for (MealLogItem item : newItems) {
+            addItem(item);
+        }
+    }
+
     public Long getMealId() { return mealId; }
     public Long getUserId() { return userId; }
     public LocalDateTime getEatenAt() { return eatenAt; }

@@ -1,8 +1,10 @@
 package com.meta.foremeal.global.exception;
 
 import com.meta.foremeal.health.exception.HealthProfileNotFoundException;
+import com.meta.foremeal.recipe.exception.RecipeNotFoundException;
 import com.meta.foremeal.user.exception.DuplicateEmailException;
 import com.meta.foremeal.user.exception.InvalidLoginException;
+import com.meta.foremeal.user.exception.InvalidPasswordException;
 import com.meta.foremeal.user.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,11 +39,25 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of("INVALID_LOGIN", e.getMessage()));
     }
 
+    @ExceptionHandler(InvalidPasswordException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPassword(InvalidPasswordException e) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ErrorResponse.of("INVALID_PASSWORD", e.getMessage()));
+    }
+
     @ExceptionHandler(HealthProfileNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleHealthProfileNotFound(HealthProfileNotFoundException e) {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.of("HEALTH_PROFILE_NOT_FOUND", e.getMessage()));
+    }
+
+    @ExceptionHandler(RecipeNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleRecipeNotFound(RecipeNotFoundException e) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of("RECIPE_NOT_FOUND", e.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -50,12 +66,19 @@ public class GlobalExceptionHandler {
 
         FieldError fieldError = e.getBindingResult().getFieldError();
         if (fieldError != null) {
-            message = fieldError.getField() + ": " + fieldError.getDefaultMessage();
+            message = fieldError.getDefaultMessage();
         }
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.of("VALIDATION_ERROR", message));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of("BAD_REQUEST", e.getMessage()));
     }
 
     @ExceptionHandler(AuthenticationException.class)
