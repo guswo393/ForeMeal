@@ -21,6 +21,7 @@ public class PantryItemResponse {
     private String storageType;
     private LocalDate expirationDate;
     private String memo;
+    private Double confidence;
     private boolean isCustom;   // 커스텀 재료 여부
 
     // 통합 영양 성분

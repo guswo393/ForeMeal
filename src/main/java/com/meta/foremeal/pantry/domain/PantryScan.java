@@ -29,7 +29,7 @@ public class PantryScan {
     @Column(name="scanned_date")
     private LocalDateTime scannedDate;
 
-    @Column(name="scan_result", columnDefinition="JSON")
+    @Column(name="scan_result", columnDefinition="JSON", insertable=false, updatable=false)
     private String scanResult; // AI 에이전트 인식 원본 데이터
 
     @Column(name="status", length=50)
