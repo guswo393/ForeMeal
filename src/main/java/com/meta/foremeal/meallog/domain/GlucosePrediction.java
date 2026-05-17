@@ -1,16 +1,10 @@
 package com.meta.foremeal.meallog.domain;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "glucose_prediction")
-@Getter
-@Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 public class GlucosePrediction {
 
     @Id
@@ -21,7 +15,7 @@ public class GlucosePrediction {
     @Column(name = "meal_id")
     private Long mealId;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id")
     private Long userId;
 
     @Column(name = "food_id")
@@ -36,6 +30,23 @@ public class GlucosePrediction {
     @Column(name = "risk_level", length = 20)
     private String riskLevel;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    protected GlucosePrediction() {
+    }
+
+    public GlucosePrediction(Long mealId, Long userId, Long foodId,
+                             String modelVersion, Integer pred1hMgdl, String riskLevel) {
+        this.mealId = mealId;
+        this.userId = userId;
+        this.foodId = foodId;
+        this.modelVersion = modelVersion;
+        this.pred1hMgdl = pred1hMgdl;
+        this.riskLevel = riskLevel;
+    }
+
+    public Long getPredictionId() {
+        return predictionId;
+    }
 }
