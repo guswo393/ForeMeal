@@ -2,8 +2,10 @@ package com.meta.foremeal.pantry.service;
 
 import com.meta.foremeal.foodmaster.domain.FoodMasterEntity;
 import com.meta.foremeal.foodmaster.repo.FoodMasterRepository;
+import com.meta.foremeal.pantry.domain.IngredientAlias;
 import com.meta.foremeal.pantry.domain.PantryItem;
 import com.meta.foremeal.pantry.domain.PantryScan;
+import com.meta.foremeal.pantry.repository.IngredientAliasRepository;
 import com.meta.foremeal.pantry.repository.PantryItemRepository;
 import com.meta.foremeal.pantry.repository.PantryScanRepository;
 import com.meta.foremeal.user.domain.User;
@@ -32,6 +34,7 @@ public class PantryService {
     private final PantryItemRepository pantryItemRepository;
     private final FoodMasterRepository foodMasterRepository;
     private final PantryScanRepository pantryScanRepository;
+    private final IngredientAliasRepository ingredientAliasRepository;
     private final UserRepository userRepository;
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -45,7 +48,7 @@ public class PantryService {
                 .imageUrl(imageUrl)
                 .status("PROCESSING")
                 .createdAt(LocalDateTime.now())
-                .scannedDate(LocalDateTime.now())
+                .scannedAt(LocalDateTime.now())
                 .build();
         pantryScanRepository.save(pantryScan);
 
@@ -84,16 +87,24 @@ public class PantryService {
     }
 
     private PantryScanItemResponse toScanItemResponse(Long scanId, DetectedPantryItem detectedItem) {
-        FoodMasterEntity matchedFood = foodMasterRepository.findByFoodNameContainingIgnoreCase(detectedItem.getName())
-                .stream()
-                .findFirst()
+        IngredientAlias alias = ingredientAliasRepository
+                .findByDetectedNameIgnoreCaseAndEnabledTrue(detectedItem.getName())
                 .orElse(null);
+        String searchKeyword = alias != null ? alias.getSearchKeyword() : detectedItem.getName();
+        String displayName = alias != null ? alias.getDisplayName() : detectedItem.getName();
+
+        FoodMasterEntity matchedFood = alias != null && alias.getFoodMaster() != null
+                ? alias.getFoodMaster()
+                : foodMasterRepository.findByFoodNameContainingIgnoreCase(searchKeyword)
+                        .stream()
+                        .findFirst()
+                        .orElse(null);
 
         if (matchedFood == null) {
             return new PantryScanItemResponse(
                     scanId,
                     detectedItem.getName(),
-                    detectedItem.getName(),
+                    displayName,
                     null,
                     detectedItem.getConfidence(),
                     false
