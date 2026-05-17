@@ -1,12 +1,19 @@
 package com.meta.foremeal.pantry.service;
 
 import com.meta.foremeal.pantry.domain.PantryItem;
-import lombok.Getter;
+import lombok.*;
+
 import java.time.LocalDate;
 
 @Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 
 public class PantryItemResponse {
+    private Long scanId; // AI 스캔 이력 매핑용 필드
+
     private Long itemId;
     private String displayName;
     private Double quantity;
@@ -23,7 +30,9 @@ public class PantryItemResponse {
     private Double sodium;
     private Double giIndex;
 
+    // 엔티티 조회용 생성자
     public PantryItemResponse(PantryItem pantryItem){
+        this.scanId=pantryItem.getPantryScan()!=null?pantryItem.getPantryScan().getScanId() : null;
         this.itemId=pantryItem.getItemId();
         this.displayName=pantryItem.getDisplayName();
         this.quantity=pantryItem.getQuantity();
