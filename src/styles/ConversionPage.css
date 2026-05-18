@@ -1,0 +1,134 @@
+.conversion-page {
+  min-height: 100vh;
+  padding: 28px 28px 100px;
+  background-color: #fff;
+  box-sizing: border-box;
+}
+
+.conversion-header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 22px;
+}
+
+.back-btn {
+  border: none;
+  background: none;
+  font-size: 44px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.conversion-header h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.conversion-header p {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.5;
+}
+
+.conversion-box {
+  background-color: #eef6ec;
+  border-radius: 9px;
+  padding: 22px 26px 28px;
+  margin-bottom: 12px;
+}
+
+.conversion-box h2,
+.result-box h2,
+.note-box h2 {
+  margin: 0 0 18px;
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.conversion-box select,
+.amount-input {
+  width: 100%;
+  height: 38px;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+  background-color: white;
+  box-sizing: border-box;
+}
+
+.conversion-box select {
+  padding: 0 14px;
+  margin-bottom: 9px;
+}
+
+.amount-input {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+}
+
+.amount-input input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+}
+
+.amount-input span {
+  font-size: 14px;
+}
+
+.result-box {
+  border: 1px solid #9cc9a5;
+  border-radius: 8px;
+  padding: 22px 26px 30px;
+  margin: 14px 0;
+}
+
+.result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  font-size: 19px;
+}
+
+.result-row strong {
+  font-size: 22px;
+}
+
+.arrow {
+  font-size: 34px;
+  color: #aaa;
+}
+
+.green {
+  color: #20c447;
+}
+
+.note-box {
+  background-color: #eef6ec;
+  border-radius: 9px;
+  padding: 20px 26px 32px;
+  margin-bottom: 12px;
+}
+
+.note-box p {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.compare-btn {
+  display: block;
+  margin: 12px auto 0;
+  padding: 10px 22px;
+  border: 1px solid #9cc9a5;
+  border-radius: 8px;
+  background-color: white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}

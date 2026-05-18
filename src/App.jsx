@@ -10,6 +10,7 @@ import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import RecipeRecommendPage from "./pages/RecipeRecommendPage";
 import DeliveryPage from './pages/DeliveryPage'
+import ConversionPage from './pages/ConversionPage'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -73,6 +74,10 @@ function App() {
 
     if (currentPage === 'delivery') {
       return <DeliveryPage />
+    }
+
+    if (currentPage === 'calculator') {
+      return <ConversionPage setCurrentPage={setCurrentPage} />
     }
 
     if (currentPage === 'refrigerator') {
