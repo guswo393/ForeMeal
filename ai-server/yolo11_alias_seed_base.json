@@ -1,0 +1,536 @@
+[
+  {
+    "detectedName": "apple",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "Orange",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "orange",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "banana",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "Banana",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "Tomato",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "tomato",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "carrot",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "Broccoli",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "broccoli",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "chicken",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "Lemon",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "lemon",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "Strawberry",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "strawberry",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "Potato",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "potato",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "milk",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "bread",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "mango",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "onion",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "Onion",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "cheese",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "corn",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "shrimp",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "Cauliflower",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "mushroom",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "butter",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "peach",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "juice",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "chocolate",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "lettuce",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "meat",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "beef",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "sugar",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "ginger",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "sausage",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "lime",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "apples",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "asparagus",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "aubergine",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "bacon",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "bananas",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "bazlama",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "Beetroot",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "blueberries",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "carrots",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "chicken_breast",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "chocolate chips",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "courgettes",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "cream",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "cream cheese",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "creme fraiche",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "dates",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "eggs",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "flour",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "goat_cheese",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "green beans",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "green bell pepper",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "green chilies",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "green_beans",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "ground_beef",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "ham",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "heavy_cream",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "labneh",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "lemons",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "mineral water",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "mushrooms",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "olive",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "olives",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "parsley",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "Peas",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "peppers",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "potatoes",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "red bell pepper",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "red grapes",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "red onion",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "salami",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "sauce",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "Shallot",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "spinach",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "spring onion",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "strawberries",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "sweet_potato",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "Sweetcorn",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "tomato paste",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "tomatoes",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "yellow bell pepper",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  },
+  {
+    "detectedName": "yoghurt",
+    "searchKeyword": "",
+    "displayName": "",
+    "food": null
+  }
+]

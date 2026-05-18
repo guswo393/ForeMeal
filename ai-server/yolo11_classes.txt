@@ -1,0 +1,89 @@
+0: apple
+1: Orange
+2: orange
+3: banana
+4: Banana
+5: Tomato
+6: tomato
+7: carrot
+8: Broccoli
+9: broccoli
+10: chicken
+11: Lemon
+12: lemon
+13: Strawberry
+14: strawberry
+15: Potato
+16: potato
+17: milk
+18: bread
+19: mango
+20: onion
+21: Onion
+22: cheese
+23: corn
+24: shrimp
+25: Cauliflower
+26: mushroom
+27: butter
+28: peach
+29: juice
+30: chocolate
+31: lettuce
+32: meat
+33: beef
+34: sugar
+35: ginger
+36: sausage
+37: lime
+38: apples
+39: asparagus
+40: aubergine
+41: bacon
+42: bananas
+43: bazlama
+44: Beetroot
+45: blueberries
+46: carrots
+47: chicken_breast
+48: chocolate chips
+49: courgettes
+50: cream
+51: cream cheese
+52: creme fraiche
+53: dates
+54: eggs
+55: flour
+56: goat_cheese
+57: green beans
+58: green bell pepper
+59: green chilies
+60: green_beans
+61: ground_beef
+62: ham
+63: heavy_cream
+64: labneh
+65: lemons
+66: mineral water
+67: mushrooms
+68: olive
+69: olives
+70: parsley
+71: Peas
+72: peppers
+73: potatoes
+74: red bell pepper
+75: red grapes
+76: red onion
+77: salami
+78: sauce
+79: Shallot
+80: spinach
+81: spring onion
+82: strawberries
+83: sweet_potato
+84: Sweetcorn
+85: tomato paste
+86: tomatoes
+87: yellow bell pepper
+88: yoghurt
