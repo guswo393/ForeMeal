@@ -7,7 +7,14 @@ pg_data/
 !**/src/test/**/build/
 application.properties
 pg_data/
-
+__pycache__/
+*.pyc
+*.pt
+ai-server/.venv/
+ai-server/datasets/train/
+ai-server/datasets/test/
+ai-server/runs/
+ai-server/models/*.pt
 
 ### STS ###
 .apt_generated

@@ -21,7 +21,7 @@ public class RecipeStep {
     @Column(name = "instruction", nullable = false, columnDefinition = "text")
     private String instruction;
 
-    @Column(name = "image_uri", length = 500)
+    @Column(name = "image_url", length = 500)
     private String imageUri;
 
     protected RecipeStep() {

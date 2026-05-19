@@ -1,51 +1,79 @@
 package com.meta.foremeal.pantry.domain;
 
 import com.meta.foremeal.foodmaster.domain.FoodMasterEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "PantryItem")
+@Table(name = "user_pantry")
 @Getter
 @NoArgsConstructor
 public class PantryItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "item_id") // 보유 재료 자체의 PK
+    @Column(name = "pantry_item_id")
     private Long itemId;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "food_id", nullable = true)
+    @JoinColumn(name = "food_id")
     private FoodMasterEntity foodMaster;
 
-    @Column(name = "display_name", nullable = false)
-    private String displayName; // 화면에 보여줄 재료/제품명
+    @Column(name = "display_name", nullable = false, length = 100)
+    private String displayName;
 
-    private Double quantity; // 수량
-    private String unit;     // 단위 (g, 개, 팩 등)
+    @Column(name = "quantity")
+    private Double quantity;
+
+    @Column(name = "quantity_unit", length = 50)
+    private String unit;
 
     @Column(name = "expiration_date")
-    private LocalDate expirationDate; // 유통기한
+    private LocalDate expirationDate;
 
-    @Column(name = "storage_type")
-    private String storageType; // 보관 방식 (냉장, 냉동, 실온 등)
+    @Column(name = "inventory_state", length = 50)
+    private String storageType;
 
-    @Column(columnDefinition = "TEXT")
-    private String memo; // 메모
+    @Column(name = "memo", columnDefinition = "TEXT")
+    private String memo;
 
-    // 사진 스캔 이력 연동
+    @Column(name = "is_staple")
+    private Boolean isStaple;
+
+    @Column(name = "added_at")
+    private LocalDateTime addedAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "confidence_score")
+    private Double confidenceScore;
+
+    @Column(name = "entry_type", length = 50)
+    private String entryType;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "scan_id", nullable=true)
+    @JoinColumn(name = "scan_id")
     private PantryScan pantryScan;
 
-    // 마스터 DB에 없을 때 사용하는 커스텀 스냅샷 (Nutrition Snapshot) 필드군
     @Column(name = "custom_name")
     private String customName;
 
@@ -66,9 +94,11 @@ public class PantryItem {
 
     @Builder
     public PantryItem(Long userId, FoodMasterEntity foodMaster, String displayName, Double quantity, String unit,
-                      LocalDate expirationDate, String storageType, String memo, PantryScan pantryScan,
-                      String customName, Double customCaloriesPer100g, Double customSugarPer100g,
-                      Double customSodiumPer100g, Double customCarbsPer100g, Double customGiIndex) {
+                      LocalDate expirationDate, String storageType, String memo, Boolean isStaple,
+                      LocalDateTime addedAt, LocalDateTime updatedAt, Double confidenceScore, String entryType,
+                      PantryScan pantryScan, String customName, Double customCaloriesPer100g,
+                      Double customSugarPer100g, Double customSodiumPer100g, Double customCarbsPer100g,
+                      Double customGiIndex) {
         this.userId = userId;
         this.foodMaster = foodMaster;
         this.displayName = displayName;
@@ -77,6 +107,11 @@ public class PantryItem {
         this.expirationDate = expirationDate;
         this.storageType = storageType;
         this.memo = memo;
+        this.isStaple = isStaple;
+        this.addedAt = addedAt;
+        this.updatedAt = updatedAt;
+        this.confidenceScore = confidenceScore;
+        this.entryType = entryType;
         this.pantryScan = pantryScan;
         this.customName = customName;
         this.customCaloriesPer100g = customCaloriesPer100g;
@@ -84,5 +119,27 @@ public class PantryItem {
         this.customSodiumPer100g = customSodiumPer100g;
         this.customCarbsPer100g = customCarbsPer100g;
         this.customGiIndex = customGiIndex;
+    }
+
+    @PrePersist
+    void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (addedAt == null) {
+            addedAt = now;
+        }
+        if (updatedAt == null) {
+            updatedAt = now;
+        }
+        if (isStaple == null) {
+            isStaple = false;
+        }
+        if (entryType == null) {
+            entryType = pantryScan == null ? "MANUAL" : "AI_SCAN";
+        }
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }
