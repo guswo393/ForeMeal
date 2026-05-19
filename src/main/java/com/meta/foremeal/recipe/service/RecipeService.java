@@ -1,5 +1,7 @@
 package com.meta.foremeal.recipe.service;
 
+import com.meta.foremeal.pantry.domain.PantryItem;
+import com.meta.foremeal.pantry.repository.PantryItemRepository;
 import com.meta.foremeal.recipe.domain.Recipe;
 import com.meta.foremeal.recipe.domain.RecipeIngredient;
 import com.meta.foremeal.recipe.domain.RecipeStep;
@@ -9,17 +11,24 @@ import com.meta.foremeal.recipe.exception.RecipeNotFoundException;
 import com.meta.foremeal.recipe.repo.RecipeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 @Service
 public class RecipeService {
 
     private final RecipeRepository recipeRepository;
+    private final PantryItemRepository pantryItemRepository;
 
-    public RecipeService(RecipeRepository recipeRepository) {
+    public RecipeService(RecipeRepository recipeRepository, PantryItemRepository pantryItemRepository) {
         this.recipeRepository = recipeRepository;
+        this.pantryItemRepository = pantryItemRepository;
     }
 
     @Transactional
@@ -60,6 +69,42 @@ public class RecipeService {
     @Transactional(readOnly = true)
     public RecipeDto.Response getById(Long recipeId) {
         return toResponse(findRecipe(recipeId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<RecipeDto.RecommendationResponse> recommendByPantry(Long userId, int limit) {
+        if (userId == null) {
+            throw new IllegalArgumentException("userId is required.");
+        }
+
+        List<PantryItem> pantryItems = pantryItemRepository.findAllByUserIdWithFoodMaster(userId);
+        Set<Long> pantryFoodIds = new HashSet<>();
+        Set<String> pantryNames = new HashSet<>();
+
+        for (PantryItem pantryItem : pantryItems) {
+            if (pantryItem.getFoodMaster() != null && pantryItem.getFoodMaster().getFoodId() != null) {
+                pantryFoodIds.add(pantryItem.getFoodMaster().getFoodId());
+            }
+            addNormalizedName(pantryNames, pantryItem.getDisplayName());
+            addNormalizedName(pantryNames, pantryItem.getCustomName());
+            if (pantryItem.getFoodMaster() != null) {
+                addNormalizedName(pantryNames, pantryItem.getFoodMaster().getFoodName());
+            }
+        }
+
+        int normalizedLimit = limit <= 0 ? 10 : Math.min(limit, 50);
+
+        return recipeRepository.findAllWithIngredients().stream()
+                .map(recipe -> toRecommendation(recipe, pantryFoodIds, pantryNames))
+                .filter(response -> response.matchedIngredientCount() > 0)
+                .sorted(Comparator
+                        .comparingInt(RecipeDto.RecommendationResponse::matchedIngredientCount).reversed()
+                        .thenComparing(Comparator.comparingDouble(RecipeDto.RecommendationResponse::matchRate).reversed())
+                        .thenComparingInt(RecipeDto.RecommendationResponse::missingIngredientCount)
+                        .thenComparing(response -> response.cookingTime() == null ? Integer.MAX_VALUE : response.cookingTime())
+                        .thenComparing(RecipeDto.RecommendationResponse::title))
+                .limit(normalizedLimit)
+                .toList();
     }
 
     @Transactional
@@ -191,6 +236,72 @@ public class RecipeService {
                         it.getDescription()
                 ))
                 .toList();
+    }
+
+    private RecipeDto.RecommendationResponse toRecommendation(
+            Recipe recipe,
+            Set<Long> pantryFoodIds,
+            Set<String> pantryNames
+    ) {
+        List<String> matchedIngredients = new ArrayList<>();
+        List<String> missingIngredients = new ArrayList<>();
+
+        for (RecipeIngredient ingredient : recipe.getIngredients()) {
+            if (matchesPantry(ingredient, pantryFoodIds, pantryNames)) {
+                matchedIngredients.add(ingredient.getIngredientName());
+            } else {
+                missingIngredients.add(ingredient.getIngredientName());
+            }
+        }
+
+        int totalIngredients = matchedIngredients.size() + missingIngredients.size();
+        double matchRate = totalIngredients == 0 ? 0.0 : (double) matchedIngredients.size() / totalIngredients;
+
+        return new RecipeDto.RecommendationResponse(
+                recipe.getRecipeId(),
+                recipe.getTitle(),
+                recipe.getDescription(),
+                recipe.getCategory(),
+                recipe.getDishType(),
+                recipe.getDifficulty(),
+                recipe.getCookingTime(),
+                recipe.getServings(),
+                recipe.getGiLevel(),
+                recipe.getImageUri(),
+                matchedIngredients.size(),
+                missingIngredients.size(),
+                Math.round(matchRate * 100.0) / 100.0,
+                matchedIngredients,
+                missingIngredients
+        );
+    }
+
+    private boolean matchesPantry(RecipeIngredient ingredient, Set<Long> pantryFoodIds, Set<String> pantryNames) {
+        if (ingredient.getFoodId() != null && pantryFoodIds.contains(ingredient.getFoodId())) {
+            return true;
+        }
+
+        String ingredientName = normalizeName(ingredient.getIngredientName());
+        if (ingredientName == null) {
+            return false;
+        }
+
+        return pantryNames.stream()
+                .anyMatch(pantryName -> pantryName.contains(ingredientName) || ingredientName.contains(pantryName));
+    }
+
+    private void addNormalizedName(Set<String> names, String value) {
+        String normalized = normalizeName(value);
+        if (normalized != null) {
+            names.add(normalized);
+        }
+    }
+
+    private String normalizeName(String value) {
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        return value.replaceAll("\\s+", "").toLowerCase(Locale.ROOT);
     }
 
     private boolean matches(String expected, String actual) {
