@@ -111,10 +111,12 @@ public class RecipeDto {
             Integer servings,
             String giLevel,
             String imageUri,
+            double healthScore,
             int matchedIngredientCount,
             int missingIngredientCount,
             double matchRate,
             List<String> matchedIngredients,
-            List<String> missingIngredients
+            List<String> missingIngredients,
+            List<String> reasons
     ) {}
 }

@@ -1,5 +1,9 @@
 package com.meta.foremeal.recipe.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.meta.foremeal.health.repo.GlucoseRepository;
+import com.meta.foremeal.health.repo.HealthProfileRepository;
+import com.meta.foremeal.meallog.repo.DailyIntakeSummaryRepository;
 import com.meta.foremeal.foodmaster.domain.FoodMasterEntity;
 import com.meta.foremeal.pantry.domain.PantryItem;
 import com.meta.foremeal.pantry.repository.PantryItemRepository;
@@ -23,7 +27,17 @@ public class RecipeServiceTest {
 
     private final RecipeRepository recipeRepository = mock(RecipeRepository.class);
     private final PantryItemRepository pantryItemRepository = mock(PantryItemRepository.class);
-    private final RecipeService recipeService = new RecipeService(recipeRepository, pantryItemRepository);
+    private final HealthProfileRepository healthProfileRepository = mock(HealthProfileRepository.class);
+    private final DailyIntakeSummaryRepository summaryRepository = mock(DailyIntakeSummaryRepository.class);
+    private final GlucoseRepository glucoseRepository = mock(GlucoseRepository.class);
+    private final RecipeService recipeService = new RecipeService(
+            recipeRepository,
+            pantryItemRepository,
+            healthProfileRepository,
+            summaryRepository,
+            glucoseRepository,
+            new ObjectMapper()
+    );
 
     @Test
     void createsRecipeWithIngredientsStepsAndSubstitutes() {
@@ -113,6 +127,10 @@ public class RecipeServiceTest {
         unrelatedRecipe.addIngredient(new RecipeIngredient(1L, "브로콜리", new BigDecimal("100"), "g"));
 
         when(pantryItemRepository.findAllByUserIdWithFoodMaster(7L)).thenReturn(List.of(pantryItem));
+        when(healthProfileRepository.findByUserId(7L)).thenReturn(Optional.empty());
+        when(summaryRepository.findByUserIdAndSummaryDate(eq(7L), any())).thenReturn(Optional.empty());
+        when(glucoseRepository.findByUserIdAndMeasuredAtBetweenOrderByMeasuredAtAsc(eq(7L), any(), any()))
+                .thenReturn(List.of());
         when(recipeRepository.findAllWithIngredients()).thenReturn(List.of(unrelatedRecipe, bananaRecipe));
 
         List<RecipeDto.RecommendationResponse> responses = recipeService.recommendByPantry(7L, 10);

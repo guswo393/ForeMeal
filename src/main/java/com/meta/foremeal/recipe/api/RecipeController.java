@@ -42,6 +42,22 @@ public class RecipeController {
         return recipeService.recommendByPantry(userId, limit);
     }
 
+    @GetMapping("/recommendations/pantry")
+    public List<RecipeDto.RecommendationResponse> recommendByPantry(
+            @RequestParam Long userId,
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+        return recipeService.recommendByPantry(userId, limit);
+    }
+
+    @GetMapping("/recommendations/health")
+    public List<RecipeDto.RecommendationResponse> recommendByHealth(
+            @RequestParam Long userId,
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+        return recipeService.recommendByHealth(userId, limit);
+    }
+
     @GetMapping("/{recipeId}")
     public RecipeDto.Response getById(@PathVariable Long recipeId) {
         return recipeService.getById(recipeId);
