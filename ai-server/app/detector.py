@@ -8,18 +8,20 @@ from PIL import Image
 from app.schemas import DetectedItem
 
 MODEL_NAME = os.getenv("YOLO_MODEL", "yolo11n.pt")
+FALLBACK_MODEL_NAME = os.getenv("YOLO_FALLBACK_MODEL", "yolo11n.pt")
+FALLBACK_ENABLED = os.getenv("YOLO_FALLBACK_ENABLED", "true").lower() == "true"
 CONFIDENCE_THRESHOLD = float(os.getenv("YOLO_CONFIDENCE", "0.25"))
+FALLBACK_CONFIDENCE_THRESHOLD = float(os.getenv("YOLO_FALLBACK_CONFIDENCE", "0.25"))
 
-_model = None
+_models = {}
 
 
-def _get_model():
-    global _model
-    if _model is None:
+def _get_model(model_name: str):
+    if model_name not in _models:
         from ultralytics import YOLO
 
-        _model = YOLO(MODEL_NAME)
-    return _model
+        _models[model_name] = YOLO(model_name)
+    return _models[model_name]
 
 
 def _load_image(image_url: str) -> Image.Image:
@@ -35,11 +37,9 @@ def _load_image(image_url: str) -> Image.Image:
     return Image.open(BytesIO(response.content)).convert("RGB")
 
 
-def detect_items(image_url: str) -> list[DetectedItem]:
-    image = _load_image(image_url)
-    model = _get_model()
-    results = model.predict(image, conf=CONFIDENCE_THRESHOLD, verbose=False)
-
+def _predict(image: Image.Image, model_name: str, confidence_threshold: float) -> list[DetectedItem]:
+    model = _get_model(model_name)
+    results = model.predict(image, conf=confidence_threshold, verbose=False)
     detected: dict[str, list[float]] = defaultdict(list)
 
     for result in results:
@@ -56,3 +56,13 @@ def detect_items(image_url: str) -> list[DetectedItem]:
         )
         for name, confidences in detected.items()
     ]
+
+
+def detect_items(image_url: str) -> list[DetectedItem]:
+    image = _load_image(image_url)
+    items = _predict(image, MODEL_NAME, CONFIDENCE_THRESHOLD)
+
+    if items or not FALLBACK_ENABLED or MODEL_NAME == FALLBACK_MODEL_NAME:
+        return items
+
+    return _predict(image, FALLBACK_MODEL_NAME, FALLBACK_CONFIDENCE_THRESHOLD)

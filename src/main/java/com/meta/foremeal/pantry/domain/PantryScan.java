@@ -13,6 +13,8 @@ import jakarta.persistence.Table;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -37,7 +39,8 @@ public class PantryScan {
     @Column(name = "scanned_at")
     private LocalDateTime scannedAt;
 
-    @Column(name = "raw_result_json", columnDefinition = "JSON", insertable = false, updatable = false)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "raw_result_json", columnDefinition = "json")
     private String rawResultJson;
 
     @Column(name = "status", length = 50)

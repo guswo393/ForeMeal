@@ -23,6 +23,15 @@ $env:YOLO_MODEL="models\ingredient-yolo.pt"
 uvicorn app.main:app --reload --port 8000
 ```
 
+If the custom model returns no detections, the server falls back to `yolo11n.pt` by default.
+You can tune fallback behavior with:
+
+```powershell
+$env:YOLO_FALLBACK_ENABLED="true"
+$env:YOLO_FALLBACK_MODEL="yolo11n.pt"
+$env:YOLO_FALLBACK_CONFIDENCE="0.25"
+```
+
 ## Endpoints
 
 - `GET /health`

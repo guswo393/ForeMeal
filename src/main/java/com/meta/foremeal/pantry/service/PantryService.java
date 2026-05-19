@@ -11,6 +11,8 @@ import com.meta.foremeal.pantry.repository.PantryScanRepository;
 import com.meta.foremeal.user.domain.User;
 import com.meta.foremeal.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -18,6 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
@@ -31,6 +34,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class PantryService {
 
+    private static final Logger log = LoggerFactory.getLogger(PantryService.class);
+
     private final PantryItemRepository pantryItemRepository;
     private final FoodMasterRepository foodMasterRepository;
     private final PantryScanRepository pantryScanRepository;
@@ -40,8 +45,15 @@ public class PantryService {
 
     @Transactional
     public List<PantryScanItemResponse> scanImage(Long userId, String imageUrl) {
+        if (userId == null) {
+            throw new IllegalArgumentException("userId is required.");
+        }
+        if (!StringUtils.hasText(imageUrl)) {
+            throw new IllegalArgumentException("imageUrl is required.");
+        }
+
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("User not found."));
 
         PantryScan pantryScan = PantryScan.builder()
                 .user(user)
@@ -71,39 +83,43 @@ public class PantryService {
 
             PantryDetectionResponse aiResults = aiResponse.getBody();
 
-            if (aiResults != null && aiResults.getItems() != null) {
+            if (aiResults == null || aiResults.getItems() == null) {
                 pantryScan.updateScanResult("SUCCESS", null, null);
-
-                return aiResults.getItems().stream()
-                        .map(result -> toScanItemResponse(pantryScan.getScanId(), result))
-                        .collect(Collectors.toList());
+                return List.of();
             }
+
+            pantryScan.updateScanResult("SUCCESS", null, null);
+
+            return aiResults.getItems().stream()
+                    .filter(result -> result != null && StringUtils.hasText(result.getName()))
+                    .map(result -> toScanItemResponse(pantryScan.getScanId(), result))
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             pantryScan.updateScanResult("FAILED", null, e.getMessage());
-            throw new IllegalStateException("AI 분석 서버와의 통신에 실패했습니다: " + e.getMessage());
+            log.error("Pantry scan failed. userId={}, imageUrl={}", userId, imageUrl, e);
+            throw new IllegalStateException("AI scan failed: " + e.getMessage(), e);
         }
-
-        return List.of();
     }
 
     private PantryScanItemResponse toScanItemResponse(Long scanId, DetectedPantryItem detectedItem) {
+        String detectedName = detectedItem.getName();
         IngredientAlias alias = ingredientAliasRepository
-                .findByDetectedNameIgnoreCaseAndEnabledTrue(detectedItem.getName())
+                .findFirstByDetectedNameIgnoreCaseAndEnabledTrueOrderByAliasIdAsc(detectedName)
                 .orElse(null);
-        String searchKeyword = alias != null ? alias.getSearchKeyword() : detectedItem.getName();
-        String displayName = alias != null ? alias.getDisplayName() : detectedItem.getName();
+        String searchKeyword = alias != null ? alias.getSearchKeyword() : detectedName;
+        String displayName = alias != null ? alias.getDisplayName() : detectedName;
 
         FoodMasterEntity matchedFood = alias != null && alias.getFoodMaster() != null
                 ? alias.getFoodMaster()
                 : foodMasterRepository.findByFoodNameContainingIgnoreCase(searchKeyword)
-                        .stream()
-                        .findFirst()
-                        .orElse(null);
+                .stream()
+                .findFirst()
+                .orElse(null);
 
         if (matchedFood == null) {
             return new PantryScanItemResponse(
                     scanId,
-                    detectedItem.getName(),
+                    detectedName,
                     displayName,
                     null,
                     detectedItem.getConfidence(),
@@ -113,7 +129,7 @@ public class PantryService {
 
         return new PantryScanItemResponse(
                 scanId,
-                detectedItem.getName(),
+                detectedName,
                 matchedFood.getFoodName(),
                 matchedFood.getFoodId(),
                 detectedItem.getConfidence(),
@@ -126,7 +142,7 @@ public class PantryService {
         PantryScan pantryScan = null;
         if (request.getScanId() != null) {
             pantryScan = pantryScanRepository.findById(request.getScanId())
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 스캔 이력입니다."));
+                    .orElseThrow(() -> new IllegalArgumentException("Scan history not found."));
         }
 
         FoodMasterEntity foodMaster = foodMasterRepository.findByFoodNameContaining(request.getInputName())
@@ -172,10 +188,10 @@ public class PantryService {
     @Transactional
     public void deleteItem(Long itemId, Long userId) {
         PantryItem pantryItem = pantryItemRepository.findById(itemId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 재료가 냉장고에 존재하지 않습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("Pantry item not found."));
 
         if (!pantryItem.getUserId().equals(userId)) {
-            throw new IllegalStateException("권한이 없습니다.");
+            throw new IllegalStateException("No permission.");
         }
 
         pantryItemRepository.delete(pantryItem);
