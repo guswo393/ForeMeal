@@ -99,4 +99,24 @@ public class RecipeDto {
             List<IngredientResponse> ingredients,
             List<StepResponse> steps
     ) {}
+
+    public record RecommendationResponse(
+            Long recipeId,
+            String title,
+            String description,
+            String category,
+            String dishType,
+            String difficulty,
+            Integer cookingTime,
+            Integer servings,
+            String giLevel,
+            String imageUri,
+            double healthScore,
+            int matchedIngredientCount,
+            int missingIngredientCount,
+            double matchRate,
+            List<String> matchedIngredients,
+            List<String> missingIngredients,
+            List<String> reasons
+    ) {}
 }

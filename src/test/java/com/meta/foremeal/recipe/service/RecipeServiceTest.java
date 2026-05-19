@@ -1,5 +1,12 @@
 package com.meta.foremeal.recipe.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.meta.foremeal.health.repo.GlucoseRepository;
+import com.meta.foremeal.health.repo.HealthProfileRepository;
+import com.meta.foremeal.meallog.repo.DailyIntakeSummaryRepository;
+import com.meta.foremeal.foodmaster.domain.FoodMasterEntity;
+import com.meta.foremeal.pantry.domain.PantryItem;
+import com.meta.foremeal.pantry.repository.PantryItemRepository;
 import com.meta.foremeal.recipe.domain.Recipe;
 import com.meta.foremeal.recipe.domain.RecipeIngredient;
 import com.meta.foremeal.recipe.domain.RecipeStep;
@@ -19,7 +26,18 @@ import static org.mockito.Mockito.*;
 public class RecipeServiceTest {
 
     private final RecipeRepository recipeRepository = mock(RecipeRepository.class);
-    private final RecipeService recipeService = new RecipeService(recipeRepository);
+    private final PantryItemRepository pantryItemRepository = mock(PantryItemRepository.class);
+    private final HealthProfileRepository healthProfileRepository = mock(HealthProfileRepository.class);
+    private final DailyIntakeSummaryRepository summaryRepository = mock(DailyIntakeSummaryRepository.class);
+    private final GlucoseRepository glucoseRepository = mock(GlucoseRepository.class);
+    private final RecipeService recipeService = new RecipeService(
+            recipeRepository,
+            pantryItemRepository,
+            healthProfileRepository,
+            summaryRepository,
+            glucoseRepository,
+            new ObjectMapper()
+    );
 
     @Test
     void createsRecipeWithIngredientsStepsAndSubstitutes() {
@@ -64,6 +82,66 @@ public class RecipeServiceTest {
 
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).title()).isEqualTo("닭가슴살 샐러드");
+    }
+
+    @Test
+    void recommendsRecipesFromPantryItems() {
+        FoodMasterEntity banana = new FoodMasterEntity();
+        banana.setFoodId(5L);
+        banana.setFoodName("바나나");
+        PantryItem pantryItem = PantryItem.builder()
+                .userId(7L)
+                .foodMaster(banana)
+                .displayName("바나나")
+                .build();
+
+        Recipe bananaRecipe = new Recipe(
+                "바나나 요거트 볼",
+                "냉장고 속 재료로 만드는 간편식",
+                "아침",
+                "간편식",
+                "EASY",
+                5,
+                1,
+                new BigDecimal("210"),
+                "{\"carbs\":32,\"protein\":7}",
+                "MEDIUM",
+                null
+        );
+        bananaRecipe.addIngredient(new RecipeIngredient(5L, "바나나", BigDecimal.ONE, "개"));
+        bananaRecipe.addIngredient(new RecipeIngredient(6L, "요거트", new BigDecimal("100"), "g"));
+
+        Recipe unrelatedRecipe = new Recipe(
+                "브로콜리 샐러드",
+                "브로콜리로 만드는 샐러드",
+                "샐러드",
+                "반찬",
+                "EASY",
+                10,
+                1,
+                new BigDecimal("120"),
+                "{}",
+                "LOW",
+                null
+        );
+        unrelatedRecipe.addIngredient(new RecipeIngredient(1L, "브로콜리", new BigDecimal("100"), "g"));
+
+        when(pantryItemRepository.findAllByUserIdWithFoodMaster(7L)).thenReturn(List.of(pantryItem));
+        when(healthProfileRepository.findByUserId(7L)).thenReturn(Optional.empty());
+        when(summaryRepository.findByUserIdAndSummaryDate(eq(7L), any())).thenReturn(Optional.empty());
+        when(glucoseRepository.findByUserIdAndMeasuredAtBetweenOrderByMeasuredAtAsc(eq(7L), any(), any()))
+                .thenReturn(List.of());
+        when(recipeRepository.findAllWithIngredients()).thenReturn(List.of(unrelatedRecipe, bananaRecipe));
+
+        List<RecipeDto.RecommendationResponse> responses = recipeService.recommendByPantry(7L, 10);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).title()).isEqualTo("바나나 요거트 볼");
+        assertThat(responses.get(0).matchedIngredients()).containsExactly("바나나");
+        assertThat(responses.get(0).missingIngredients()).containsExactly("요거트");
+        assertThat(responses.get(0).matchedIngredientCount()).isEqualTo(1);
+        assertThat(responses.get(0).missingIngredientCount()).isEqualTo(1);
+        assertThat(responses.get(0).matchRate()).isEqualTo(0.5);
     }
 
     private RecipeDto.CreateRequest createRequest(String title, String category, String dishType,
