@@ -1,0 +1,52 @@
+package com.meta.foremeal.meallog.domain;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "glucose_prediction")
+public class GlucosePrediction {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "prediction_id")
+    private Long predictionId;
+
+    @Column(name = "meal_id")
+    private Long mealId;
+
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Column(name = "food_id")
+    private Long foodId;
+
+    @Column(name = "model_version", length = 50)
+    private String modelVersion;
+
+    @Column(name = "pred_1h_mgdl")
+    private Integer pred1hMgdl;
+
+    @Column(name = "risk_level", length = 20)
+    private String riskLevel;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    protected GlucosePrediction() {
+    }
+
+    public GlucosePrediction(Long mealId, Long userId, Long foodId,
+                             String modelVersion, Integer pred1hMgdl, String riskLevel) {
+        this.mealId = mealId;
+        this.userId = userId;
+        this.foodId = foodId;
+        this.modelVersion = modelVersion;
+        this.pred1hMgdl = pred1hMgdl;
+        this.riskLevel = riskLevel;
+    }
+
+    public Long getPredictionId() {
+        return predictionId;
+    }
+}

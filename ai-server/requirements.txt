@@ -2,6 +2,7 @@ fastapi
 uvicorn[standard]
 pydantic
 requests
+psycopg2-binary
 pillow
 ultralytics
 opencv-python
