@@ -13,3 +13,8 @@ food-safety.recipe.api-key=${FOOD_SAFETY_API_KEY:sample}
 
 food-safety.food.base-url=http://apis.data.go.kr/1471000/FoodNtrCpntDbInfo02/getFoodNtrCpntDbInq02
 food-safety.food.api-key=${FOOD_SAFETY_API_KEY:sample}
+
+# Kakao Local API for out guide nearby restaurant search.
+# Create a Kakao Developers app, enable Kakao Map, then set the REST API key.
+kakao.local.base-url=https://dapi.kakao.com
+kakao.local.rest-api-key=${KAKAO_LOCAL_REST_API_KEY:sample}
