@@ -2,6 +2,8 @@ package com.meta.foremeal.pantry.controller;
 
 import com.meta.foremeal.pantry.service.PantryItemRequest;
 import com.meta.foremeal.pantry.service.PantryItemResponse;
+import com.meta.foremeal.pantry.service.PantryScanConfirmRequest;
+import com.meta.foremeal.pantry.service.PantryScanConfirmResponse;
 import com.meta.foremeal.pantry.service.PantryScanItemResponse;
 import com.meta.foremeal.pantry.service.PantryScanRequest;
 import com.meta.foremeal.pantry.service.PantryService;
@@ -48,5 +50,13 @@ public class PantryController {
     public ResponseEntity<List<PantryScanItemResponse>> requestScan(@RequestBody PantryScanRequest request) {
         List<PantryScanItemResponse> detectedItems = pantryService.scanImage(request.getUserId(), request.getImageUrl());
         return ResponseEntity.ok(detectedItems);
+    }
+
+    @PostMapping("/scans/{scanId}/confirm")
+    public ResponseEntity<PantryScanConfirmResponse> confirmScan(
+            @PathVariable("scanId") Long scanId,
+            @RequestBody PantryScanConfirmRequest request) {
+        PantryScanConfirmResponse response = pantryService.confirmScan(scanId, request);
+        return ResponseEntity.ok(response);
     }
 }
