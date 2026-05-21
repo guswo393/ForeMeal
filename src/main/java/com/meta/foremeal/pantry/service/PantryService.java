@@ -24,6 +24,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -175,6 +176,82 @@ public class PantryService {
 
         PantryItem savedPantryItem = pantryItemRepository.save(builder.build());
         return savedPantryItem.getItemId();
+    }
+
+    @Transactional
+    public PantryScanConfirmResponse confirmScan(Long scanId, PantryScanConfirmRequest request) {
+        if (request == null || request.getUserId() == null) {
+            throw new IllegalArgumentException("userId is required.");
+        }
+
+        PantryScan pantryScan = pantryScanRepository.findById(scanId)
+                .orElseThrow(() -> new IllegalArgumentException("Scan history not found."));
+
+        if (!pantryScan.getUser().getUserId().equals(request.getUserId())) {
+            throw new IllegalStateException("No permission.");
+        }
+
+        List<PantryScanConfirmResponse.SavedItem> savedItems = new ArrayList<>();
+        List<PantryScanConfirmRequest.Item> requestItems =
+                request.getItems() == null ? List.of() : request.getItems();
+
+        for (PantryScanConfirmRequest.Item item : requestItems) {
+            if (item == null || Boolean.FALSE.equals(item.getSelected())) {
+                continue;
+            }
+            if (!StringUtils.hasText(item.getInputName())) {
+                throw new IllegalArgumentException("inputName is required for selected items.");
+            }
+
+            PantryItem savedItem = pantryItemRepository.save(buildConfirmedPantryItem(request.getUserId(), pantryScan, item));
+            savedItems.add(new PantryScanConfirmResponse.SavedItem(
+                    savedItem.getItemId(),
+                    savedItem.getDisplayName()
+            ));
+        }
+
+        return new PantryScanConfirmResponse(scanId, savedItems.size(), savedItems);
+    }
+
+    private PantryItem buildConfirmedPantryItem(Long userId, PantryScan pantryScan, PantryScanConfirmRequest.Item item) {
+        FoodMasterEntity foodMaster = findFoodMaster(item);
+
+        PantryItem.PantryItemBuilder builder = PantryItem.builder()
+                .userId(userId)
+                .foodMaster(foodMaster)
+                .displayName(item.getInputName())
+                .quantity(item.getQuantity())
+                .unit(item.getUnit())
+                .expirationDate(item.getExpirationDate())
+                .storageType(item.getStorageType())
+                .memo(item.getMemo())
+                .confidenceScore(item.getConfidence())
+                .entryType("AI_SCAN_CONFIRMED")
+                .pantryScan(pantryScan);
+
+        if (foodMaster == null) {
+            builder.customName(item.getInputName())
+                    .customCaloriesPer100g(item.getCalories())
+                    .customSugarPer100g(item.getSugar())
+                    .customCarbsPer100g(item.getCarbs())
+                    .customSodiumPer100g(item.getSodium())
+                    .customGiIndex(item.getGiIndex());
+        }
+
+        return builder.build();
+    }
+
+    private FoodMasterEntity findFoodMaster(PantryScanConfirmRequest.Item item) {
+        if (item.getFoodId() != null) {
+            return foodMasterRepository.findById(item.getFoodId())
+                    .orElseThrow(() -> new IllegalArgumentException("Food master not found."));
+        }
+
+        return foodMasterRepository.findByFoodNameContaining(item.getInputName())
+                .stream()
+                .filter(food -> food.getFoodName().equalsIgnoreCase(item.getInputName()))
+                .findFirst()
+                .orElse(null);
     }
 
     public List<PantryItemResponse> getMyPantry(Long userId) {
