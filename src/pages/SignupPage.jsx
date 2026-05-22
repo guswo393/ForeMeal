@@ -21,7 +21,7 @@ function SignupPage({ setAuthPage, signupUser, setSignupUser }) {
     }))
   }
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     const { userId, password, passwordCheck, nickname, weight, height, birth } = form
 
     if (!userId || !password || !passwordCheck || !nickname || !weight || !height || !birth) {
@@ -41,17 +41,39 @@ function SignupPage({ setAuthPage, signupUser, setSignupUser }) {
       return
     }
 
-    setSignupUser({
-      userId,
-      password,
-      nickname,
-      weight,
-      height,
-      birth
-    })
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: userId,
+          password,
+          username: nickname,
+          birthDate: birth,
+        }),
+      })
 
-    alert('회원가입이 완료되었습니다. 로그인 해주세요.')
-    setAuthPage('login')
+      if (!response.ok) {
+        throw new Error('signup failed')
+      }
+
+      setSignupUser({
+        userId,
+        password,
+        nickname,
+        weight,
+        height,
+        birth
+      })
+
+      alert('회원가입이 완료되었습니다. 로그인 해주세요.')
+      setAuthPage('login')
+    } catch (error) {
+      console.error('회원가입 실패:', error)
+      alert('회원가입에 실패했습니다. 입력값이나 서버 상태를 확인해주세요.')
+    }
   }
 
   return (
@@ -63,7 +85,7 @@ function SignupPage({ setAuthPage, signupUser, setSignupUser }) {
         <input
           type="text"
           name="userId"
-          placeholder="아이디"
+          placeholder="이메일"
           value={form.userId}
           onChange={handleChange}
           className="signup-input"

@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import "../styles/ConversionPage.css";
 
-function ConversionPage({ setCurrentPage }) {
+function ConversionPage({ setCurrentPage, userProfile }) {
   const [baseIngredients, setBaseIngredients] = useState([]);
   const [substituteIngredients, setSubstituteIngredients] = useState([]);
 
   const [baseIngredientId, setBaseIngredientId] = useState("");
   const [substituteIngredientId, setSubstituteIngredientId] = useState("");
-  const [amount, setAmount] = useState(10);
+  const [amount, setAmount] = useState("");
 
   const [result, setResult] = useState(null);
 
@@ -16,81 +16,83 @@ function ConversionPage({ setCurrentPage }) {
   }, []);
 
   useEffect(() => {
-    if (baseIngredientId && substituteIngredientId && amount) {
+    if (baseIngredientId) {
+      fetchSubstitutes(baseIngredientId);
+    }
+  }, [baseIngredientId]);
+
+  useEffect(() => {
+    if (baseIngredientId && substituteIngredientId && Number(amount) > 0) {
       calculateConversion();
     }
   }, [baseIngredientId, substituteIngredientId, amount]);
 
+  const authHeaders = {
+    ...(userProfile?.token ? { Authorization: `Bearer ${userProfile.token}` } : {}),
+  };
+
   const fetchIngredients = async () => {
     try {
-      // 나중에 백엔드 연결 시 사용
-      // const response = await fetch("http://localhost:8080/api/ingredients");
-      // const data = await response.json();
-      // setBaseIngredients(data.baseIngredients);
-      // setSubstituteIngredients(data.substituteIngredients);
+      const response = await fetch("/api/recipe/conversions/ingredients", {
+        headers: authHeaders,
+      });
 
-      // 임시 데이터
-      const data = {
-        baseIngredients: [
-          { id: 1, name: "설탕", calories: 40, sugar: 10 },
-          { id: 2, name: "꿀", calories: 30, sugar: 8 },
-        ],
-        substituteIngredients: [
-          { id: 101, name: "스테비아", ratio: 0.3 },
-          { id: 102, name: "알룰로스", ratio: 0.7 },
-        ],
-      };
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
 
-      setBaseIngredients(data.baseIngredients);
-      setSubstituteIngredients(data.substituteIngredients);
+      const data = await response.json();
 
-      setBaseIngredientId(data.baseIngredients[0].id);
-      setSubstituteIngredientId(data.substituteIngredients[0].id);
+      setBaseIngredients(data);
+      setBaseIngredientId(data[0]?.name ?? "");
     } catch (error) {
       console.error("재료 목록 불러오기 실패:", error);
     }
   };
 
+  const fetchSubstitutes = async (ingredient) => {
+    try {
+      const response = await fetch(
+        `/api/recipe/conversions/substitutes?ingredient=${encodeURIComponent(ingredient)}`,
+        { headers: authHeaders }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      setSubstituteIngredients(data);
+      setSubstituteIngredientId(data[0]?.name ?? "");
+    } catch (error) {
+      console.error("대체 재료 목록 불러오기 실패:", error);
+      setSubstituteIngredients([]);
+      setSubstituteIngredientId("");
+    }
+  };
+
   const calculateConversion = async () => {
     try {
-      // 나중에 백엔드 연결 시 사용
-      // const response = await fetch("http://localhost:8080/api/conversions/calculate", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify({
-      //     baseIngredientId,
-      //     substituteIngredientId,
-      //     amount,
-      //   }),
-      // });
-      // const data = await response.json();
-      // setResult(data);
-
-      // 임시 계산
-      const base = baseIngredients.find(
-        (item) => String(item.id) === String(baseIngredientId)
-      );
-
-      const substitute = substituteIngredients.find(
-        (item) => String(item.id) === String(substituteIngredientId)
-      );
-
-      if (!base || !substitute) return;
-
-      const convertedAmount = Math.round(amount * substitute.ratio);
-
-      setResult({
-        baseName: base.name,
-        baseAmount: amount,
-        substituteName: substitute.name,
-        substituteAmount: convertedAmount,
-        unit: "g",
-        note: `${substitute.name}는 ${base.name} 대비 약 ${
-          substitute.ratio * 10
-        }배 기준으로 환산됩니다.`,
+      const response = await fetch("/api/recipe/conversions/calculate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders,
+        },
+        body: JSON.stringify({
+          ingredient: baseIngredientId,
+          substitute: substituteIngredientId,
+          gram: Number(amount),
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      setResult(data);
     } catch (error) {
       console.error("수치 환산 실패:", error);
     }
@@ -123,7 +125,7 @@ function ConversionPage({ setCurrentPage }) {
           onChange={(e) => setBaseIngredientId(e.target.value)}
         >
           {baseIngredients.map((item) => (
-            <option key={item.id} value={item.id}>
+            <option key={item.name} value={item.name}>
               재료명 : {item.name}
             </option>
           ))}
@@ -132,8 +134,13 @@ function ConversionPage({ setCurrentPage }) {
         <div className="amount-input">
           <input
             type="number"
+            min="0"
             value={amount}
-            onChange={(e) => setAmount(Number(e.target.value))}
+            onChange={(e) => {
+              const value = e.target.value;
+              setAmount(value.replace(/^0+(?=\d)/, ""));
+            }}
+            placeholder="g 입력"
           />
           <span>g</span>
         </div>
@@ -147,7 +154,7 @@ function ConversionPage({ setCurrentPage }) {
           onChange={(e) => setSubstituteIngredientId(e.target.value)}
         >
           {substituteIngredients.map((item) => (
-            <option key={item.id} value={item.id}>
+            <option key={item.name} value={item.name}>
               {item.name}
             </option>
           ))}
@@ -160,16 +167,16 @@ function ConversionPage({ setCurrentPage }) {
 
           <div className="result-row">
             <span>
-              {result.baseName}{" "}
-              <strong>{result.baseAmount}g</strong>
+              {result.ingredient}{" "}
+              <strong>{result.inputGramText}</strong>
             </span>
 
             <span className="arrow">↔</span>
 
             <span>
-              {result.substituteName}{" "}
+              {result.substitute}{" "}
               <strong className="green">
-                {result.substituteAmount}g
+                {result.convertedGramText}
               </strong>
             </span>
           </div>
@@ -179,7 +186,7 @@ function ConversionPage({ setCurrentPage }) {
       {result && (
         <section className="note-box">
           <h2>💡 참고</h2>
-          <p>{result.note}</p>
+          <p>{result.description || result.resultText}</p>
         </section>
       )}
       

@@ -19,10 +19,12 @@ function App() {
 
   const [userProfile, setUserProfile] = useState({
     userId: '',
+    email: '',
     nickname: '',
     weight: '',
     height: '',
-    birth: ''
+    birth: '',
+    token: ''
   })
 
   const [signupUser, setSignupUser] = useState({
@@ -57,11 +59,17 @@ function App() {
 
   const renderPage = () => {
     if (currentPage === 'home') {
-      return <HomePage userName={userProfile.nickname} />
+      return (
+        <HomePage
+          userName={userProfile.nickname}
+          userProfile={userProfile}
+          setCurrentPage={setCurrentPage}
+        />
+      )
     }
 
     if (currentPage === 'glucose') {
-      return <GlucosePage />
+      return <GlucosePage userProfile={userProfile} />
     }
 
     if (currentPage === 'meal') {
@@ -69,19 +77,19 @@ function App() {
     }
 
     if (currentPage === 'recipeRecommend') {
-      return <RecipeRecommendPage />
+      return <RecipeRecommendPage userProfile={userProfile} />
     }
 
     if (currentPage === 'delivery') {
-      return <DeliveryPage />
+      return <DeliveryPage userProfile={userProfile} />
     }
 
     if (currentPage === 'calculator') {
-      return <ConversionPage setCurrentPage={setCurrentPage} />
+      return <ConversionPage setCurrentPage={setCurrentPage} userProfile={userProfile} />
     }
 
     if (currentPage === 'refrigerator') {
-      return <RefrigeratorPage />
+      return <RefrigeratorPage userProfile={userProfile} />
     }
     
 

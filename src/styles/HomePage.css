@@ -62,6 +62,10 @@
   margin-bottom: 48px;
 }
 
+.clickable-section {
+  cursor: pointer;
+}
+
 .section h2 {
   font-size: 21px;
   font-weight: 800;
@@ -134,7 +138,7 @@
 }
 
 /* 추천 레시피 가로 스크롤 */
-.recipe-list {
+.home-recipe-list {
   display: flex;
   gap: 14px;
   overflow-x: auto;
@@ -142,16 +146,21 @@
   scroll-snap-type: x mandatory;
 }
 
-.recipe-list::-webkit-scrollbar {
+.home-recipe-list::-webkit-scrollbar {
   display: none;
 }
 
-.recipe-card {
+.home-recipe-card {
   min-width: 178px;
   scroll-snap-align: start;
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
 }
 
-.recipe-card img {
+.home-recipe-card img {
   width: 178px;
   height: 178px;
   border-radius: 8px;
@@ -165,17 +174,30 @@
   color: #777777;
 }
 
-.recipe-card h3 {
+.home-recipe-card h3 {
   font-size: 17px;
   font-weight: 700;
   color: #111111;
   margin: 0 0 6px;
 }
 
-.recipe-card strong {
-  font-size: 18px;
-  font-weight: 800;
+.home-recipe-card strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
   color: #111111;
+}
+
+.empty-recipe-card {
+  min-width: 178px;
+  height: 178px;
+  border: 1px solid #d8e7d8;
+  border-radius: 8px;
+  background: #f4faf3;
+  color: #1f5f2b;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 /* 모바일 화면 대응 */
@@ -189,11 +211,11 @@
     font-size: 14px;
   }
 
-  .recipe-card {
+  .home-recipe-card {
     min-width: 170px;
   }
 
-  .recipe-card img {
+  .home-recipe-card img {
     width: 170px;
     height: 170px;
   }

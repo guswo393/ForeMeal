@@ -5,10 +5,43 @@ function LoginPage({ setIsLoggedIn, setUserProfile, setAuthPage, signupUser }) {
   const [userId, setUserId] = useState('')
   const [password, setPassword] = useState('')
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!userId || !password) {
-      alert('아이디와 비밀번호를 입력해주세요.')
+      alert('이메일과 비밀번호를 입력해주세요.')
       return
+    }
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: userId,
+          password,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('login failed')
+      }
+
+      const data = await response.json()
+
+      setUserProfile({
+        userId: data.userId,
+        email: data.email,
+        nickname: data.username,
+        weight: '',
+        height: '',
+        birth: '',
+        token: data.accessToken
+      })
+      setIsLoggedIn(true)
+      return
+    } catch (error) {
+      console.error('로그인 실패:', error)
     }
 
     if (
@@ -18,22 +51,12 @@ function LoginPage({ setIsLoggedIn, setUserProfile, setAuthPage, signupUser }) {
     ) {
       setUserProfile({
         userId: signupUser.userId,
+        email: signupUser.userId,
         nickname: signupUser.nickname,
         weight: signupUser.weight,
         height: signupUser.height,
-        birth: signupUser.birth
-      })
-      setIsLoggedIn(true)
-      return
-    }
-
-    if (userId === 'plurie01' && password === '1234') {
-      setUserProfile({
-        userId: 'plurie01',
-        nickname: '플러이',
-        weight: '26',
-        height: '160',
-        birth: '2025-04-19'
+        birth: signupUser.birth,
+        token: ''
       })
       setIsLoggedIn(true)
       return
@@ -50,7 +73,7 @@ function LoginPage({ setIsLoggedIn, setUserProfile, setAuthPage, signupUser }) {
 
         <input
           type="text"
-          placeholder="아이디"
+          placeholder="이메일"
           value={userId}
           onChange={(e) => setUserId(e.target.value)}
           className="login-input"

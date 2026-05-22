@@ -6,6 +6,7 @@ import com.meta.foremeal.outguide.dto.OutGuideDto;
 import com.meta.foremeal.outguide.external.KakaoLocalClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,7 +16,7 @@ import java.util.List;
 public class OutGuideService {
 
     private static final int DEFAULT_RADIUS_METERS = 1_000;
-    private static final int DEFAULT_SIZE = 15;
+    private static final int DEFAULT_SIZE = 45;
 
     private final KakaoLocalClient kakaoLocalClient;
     private final DailyIntakeSummaryRepository dailyIntakeSummaryRepository;
@@ -34,6 +35,7 @@ public class OutGuideService {
             Long userId,
             BigDecimal lat,
             BigDecimal lng,
+            String query,
             Integer radius,
             Integer size,
             LocalDate date
@@ -41,8 +43,15 @@ public class OutGuideService {
         LocalDate targetDate = date == null ? LocalDate.now() : date;
         OutGuideDto.DailyContext dailyContext = getDailyContext(userId, targetDate);
 
-        List<OutGuideDto.RestaurantResponse> restaurants = kakaoLocalClient
-                .searchRestaurants(lat, lng, radiusOrDefault(radius), sizeOrDefault(size))
+        if (!StringUtils.hasText(query) && (lat == null || lng == null)) {
+            throw new IllegalArgumentException("위치 기반 검색에는 위도와 경도가 필요합니다.");
+        }
+
+        List<OutGuideDto.RestaurantCandidate> candidates = StringUtils.hasText(query)
+                ? kakaoLocalClient.searchRestaurantsByKeyword(query.trim(), lat, lng, radius, sizeOrDefault(size))
+                : kakaoLocalClient.searchRestaurants(lat, lng, radiusOrDefault(radius), sizeOrDefault(size));
+
+        List<OutGuideDto.RestaurantResponse> restaurants = candidates
                 .stream()
                 .map(candidate -> toResponse(candidate, dailyContext))
                 .toList();
@@ -52,6 +61,14 @@ public class OutGuideService {
                 dailyContext,
                 restaurants
         );
+    }
+
+    public OutGuideDto.LocationResponse searchLocation(String query) {
+        if (!StringUtils.hasText(query)) {
+            throw new IllegalArgumentException("주소를 입력해주세요.");
+        }
+
+        return kakaoLocalClient.searchLocation(query.trim());
     }
 
     private OutGuideDto.DailyContext getDailyContext(Long userId, LocalDate date) {

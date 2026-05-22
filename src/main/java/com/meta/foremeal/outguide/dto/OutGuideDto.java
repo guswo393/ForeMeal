@@ -48,6 +48,13 @@ public class OutGuideDto {
             List<RestaurantResponse> restaurants
     ) {}
 
+    public record LocationResponse(
+            String query,
+            String address,
+            BigDecimal lat,
+            BigDecimal lng
+    ) {}
+
     public record RestaurantCandidate(
             String placeId,
             String name,

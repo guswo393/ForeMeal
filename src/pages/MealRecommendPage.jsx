@@ -25,7 +25,18 @@ function MealRecommendPage({ setCurrentPage }) {
   return (
     <div className="meal-page">
       {menuItems.map((item) => (
-        <div className="meal-card" key={item.id}>
+        <div
+          className="meal-card"
+          key={item.id}
+          role="button"
+          tabIndex={0}
+          onClick={() => setCurrentPage(item.page)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              setCurrentPage(item.page);
+            }
+          }}
+        >
           <img
             src={item.image}
             alt={item.title}
@@ -36,7 +47,11 @@ function MealRecommendPage({ setCurrentPage }) {
             <h2>{item.title}</h2>
 
             <button
-              onClick={() => setCurrentPage(item.page)}
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                setCurrentPage(item.page);
+              }}
             >
               선택
             </button>

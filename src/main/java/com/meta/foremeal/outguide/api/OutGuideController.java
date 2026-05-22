@@ -26,8 +26,9 @@ public class OutGuideController {
     @GetMapping("/restaurants")
     public OutGuideDto.RestaurantSearchResponse searchRestaurants(
             @AuthenticationPrincipal CustomUserPrincipal principal,
-            @RequestParam BigDecimal lat,
-            @RequestParam BigDecimal lng,
+            @RequestParam(required = false) BigDecimal lat,
+            @RequestParam(required = false) BigDecimal lng,
+            @RequestParam(required = false) String query,
             @RequestParam(required = false) Integer radius,
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
@@ -40,9 +41,22 @@ public class OutGuideController {
                 principal.getUserId(),
                 lat,
                 lng,
+                query,
                 radius,
                 size,
                 date
         );
+    }
+
+    @GetMapping("/location")
+    public OutGuideDto.LocationResponse searchLocation(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @RequestParam String query
+    ) {
+        if (principal == null) {
+            throw new IllegalArgumentException("Login is required to search location.");
+        }
+
+        return outGuideService.searchLocation(query);
     }
 }

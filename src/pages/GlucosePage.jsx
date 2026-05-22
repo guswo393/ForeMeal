@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import "../styles/GlucosePage.css";
 
-function GlucosePage() {
-  const [selectedTab, setSelectedTab] = useState("daily");
+function GlucosePage({ userProfile }) {
+  const [selectedTab, setSelectedTab] = useState("input");
   const [predictionData, setPredictionData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -11,82 +11,51 @@ function GlucosePage() {
       try {
         setLoading(true);
 
-        let mockData = null;
-
-        if (selectedTab === "daily") {
-          mockData = {
-            summary: {
-              glucose: {
-                title: "예측 혈당",
-                value: 156,
-                unit: "mg/dl",
-                changeText: "전일 대비 +20%",
-              },
-              bloodPressure: {
-                title: "예측 혈압",
-                value: "70/110",
-                unit: "",
-                changeText: "전일 대비 -13%",
-              },
-            },
-            charts: [
-              {
-                id: "glucose-daily",
-                title: "오늘의 혈당",
-                labels: ["00", "03", "06", "09", "12", "15", "18", "21"],
-                values: [30, 35, 50, 70, 90, 120, 110, 160],
-              },
-              {
-                id: "pressure-daily",
-                title: "오늘의 혈압",
-                labels: ["00", "03", "06", "09", "12", "15", "18", "21"],
-                values: [40, 45, 55, 60, 70, 85, 80, 120],
-              },
-            ],
-          };
+        if (!userProfile?.token) {
+          setPredictionData(null);
+          return;
         }
 
-        if (selectedTab === "total") {
-          mockData = {
-            summary: {
-              glucose: {
-                title: "누적 평균 혈당",
-                value: 142,
-                unit: "mg/dl",
-                changeText: "최근 7일 평균",
-              },
-              bloodPressure: {
-                title: "누적 평균 혈압",
-                value: "75/115",
-                unit: "",
-                changeText: "최근 7일 평균",
-              },
-            },
-            charts: [
-              {
-                id: "glucose-total",
-                title: "누적 혈당",
-                labels: ["월", "화", "수", "목", "금", "토", "일"],
-                values: [130, 145, 138, 150, 142, 155, 148],
-              },
-              {
-                id: "pressure-total",
-                title: "누적 혈압",
-                labels: ["월", "화", "수", "목", "금", "토", "일"],
-                values: [110, 115, 112, 118, 116, 120, 115],
-              },
-            ],
-          };
+        const today = new Date().toISOString().split("T")[0];
+        const response = await fetch(`/api/glucose/daily?date=${today}`, {
+          headers: {
+            Authorization: `Bearer ${userProfile.token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
         }
 
-        setPredictionData(mockData);
+        const data = await response.json();
+        const records = data.records ?? [];
+        const values = records.map((record) => Number(record.glucoseValue));
+        const latest = records[records.length - 1];
+        const average = values.length
+          ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)
+          : null;
 
-        // 나중에 백엔드 연결 시 위 mockData 부분 삭제하고 아래 사용
-        // const response = await fetch(`/api/glucose/prediction?type=${selectedTab}`);
-        // const data = await response.json();
-        // setPredictionData(data);
+        setPredictionData({
+          summary: {
+            glucose: {
+              title: selectedTab === "daily" ? "최근 혈당" : "오늘 평균 혈당",
+              value: selectedTab === "daily" ? latest?.glucoseValue ?? "-" : average ?? "-",
+              unit: selectedTab === "daily" && !latest ? "" : "mg/dl",
+              changeText: values.length ? `${values.length}건 기록됨` : "아직 입력된 기록이 없습니다",
+            },
+          },
+          charts: [
+            {
+              id: "glucose-daily",
+              title: selectedTab === "daily" ? "오늘의 혈당" : "오늘 혈당 기록",
+              labels: records.map((record) => record.measuredAt.slice(11, 16)),
+              values,
+            },
+          ],
+        });
       } catch (error) {
         console.error("예측 데이터 불러오기 실패:", error);
+        setPredictionData(null);
       } finally {
         setLoading(false);
       }
@@ -98,7 +67,7 @@ function GlucosePage() {
       setLoading(false);
       setPredictionData(null);
     }
-  }, [selectedTab]);
+  }, [selectedTab, userProfile?.token]);
 
   return (
     <div className="glucose-page">
@@ -130,7 +99,7 @@ function GlucosePage() {
       </div>
 
       {selectedTab === "input" ? (
-        <GlucoseInputForm />
+        <GlucoseInputForm userProfile={userProfile} />
       ) : loading ? (
         <div>불러오는 중...</div>
       ) : !predictionData ? (
@@ -139,7 +108,6 @@ function GlucosePage() {
         <>
           <div className="summary-row">
             <SummaryCard data={predictionData.summary.glucose} />
-            <SummaryCard data={predictionData.summary.bloodPressure} />
           </div>
 
           {predictionData.charts.map((chart) => (
@@ -166,6 +134,15 @@ function SummaryCard({ data }) {
 }
 
 function SimpleChart({ chart }) {
+  if (!chart.values.length) {
+    return (
+      <div className="chart-card">
+        <h3>{chart.title}</h3>
+        <div>오늘 입력된 혈당 기록이 없습니다.</div>
+      </div>
+    );
+  }
+
   return (
     <div className="chart-card">
       <h3>{chart.title}</h3>
@@ -176,7 +153,7 @@ function SimpleChart({ chart }) {
             <div
               className="chart-bar"
               style={{
-                height: `${value}px`,
+                height: `${Math.min(value, 180)}px`,
               }}
             />
 
@@ -188,32 +165,61 @@ function SimpleChart({ chart }) {
   );
 }
 
-function GlucoseInputForm() {
+function GlucoseInputForm({ userProfile }) {
   const [glucose, setGlucose] = useState("");
   const [time, setTime] = useState("");
   const [mealType, setMealType] = useState("식사 전");
   const [mealHour, setMealHour] = useState("");
 
-  const handleSubmit = (e) => {
+  const measureTypeMap = {
+    "식사 전": "BEFORE_MEAL",
+    "식사 후": mealHour === "1" ? "AFTER_MEAL_1H" : "AFTER_MEAL_2H",
+    "공복 혈당": "FASTING",
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!userProfile?.token) {
+      alert("로그인 토큰이 없어 저장할 수 없습니다. 다시 로그인해주세요.");
+      return;
+    }
+
+    if (!glucose || !time) {
+      alert("혈당과 시간을 입력해주세요.");
+      return;
+    }
+
+    const today = new Date().toISOString().split("T")[0];
     const inputData = {
-      glucose,
-      time,
-      mealType,
-      mealHour,
+      measuredAt: `${today}T${time}:00`,
+      glucoseValue: Number(glucose),
+      measureType: measureTypeMap[mealType],
+      memo: mealType === "식사 후" && mealHour ? `식사 ${mealHour}시간 후` : mealType,
     };
 
-    console.log("입력 데이터:", inputData);
+    try {
+      const response = await fetch("/api/glucose", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userProfile.token}`,
+        },
+        body: JSON.stringify(inputData),
+      });
 
-    // 나중에 백엔드 저장 연결
-    // fetch("/api/glucose/records", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify(inputData),
-    // });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      alert("혈당 기록이 저장되었습니다.");
+      setGlucose("");
+      setTime("");
+      setMealHour("");
+    } catch (error) {
+      console.error("혈당 저장 실패:", error);
+      alert("혈당 저장에 실패했습니다.");
+    }
   };
 
   return (

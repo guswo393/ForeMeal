@@ -1,29 +1,16 @@
 import { useEffect, useState } from "react";
 import "../styles/HomePage.css";
 
-function HomePage() {
-  // =========================
-  // 혈당 그래프 데이터
-  // 나중에 백엔드에서 받아올 예정
-  // =========================
+function HomePage({ userProfile, setCurrentPage }) {
   const [graphData, setGraphData] = useState({
     pastLine: "",
     predictionYellow: "",
     predictionGreen: "",
   });
 
-  // =========================
-  // 추천 레시피 데이터
-  // 나중에 백엔드에서 받아올 예정
-  // =========================
   const [recipes, setRecipes] = useState([]);
 
   useEffect(() => {
-    // ====================================
-    // 임시 데이터
-    // 나중에 fetch/axios로 교체 예정
-    // ====================================
-
     setGraphData({
       pastLine:
         "M20 95 C45 85, 45 70, 70 82 C95 95, 95 35, 125 45 C155 55, 135 110, 170 105 C190 102, 185 130, 210 130 C245 130, 240 45, 280 45 C310 45, 300 105, 340 95",
@@ -35,58 +22,84 @@ function HomePage() {
         "M340 95 C365 94, 380 85, 430 96",
     });
 
-    setRecipes([
-      {
-        id: 1,
-        category: "양식",
-        name: "에그마요샌드위치",
-        sugar: 0,
-        sodium: 0,
-        image:
-          "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=500&q=80",
-      },
-      {
-        id: 2,
-        category: "한식",
-        name: "된장찌개",
-        sugar: 0,
-        sodium: 0,
-        image:
-          "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&w=500&q=80",
-      },
-      {
-        id: 3,
-        category: "한식",
-        name: "김치찌개",
-        sugar: 0,
-        sodium: 0,
-        image:
-          "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=500&q=80",
-      },
-    ]);
+    const normalizeImageUrl = (imageUri) => {
+      if (!imageUri) return "/images/recipe.jpg";
+      if (imageUri.startsWith("http") || imageUri.startsWith("/")) return imageUri;
+      return `/images/${imageUri}`;
+    };
 
-    // ====================================
-    // 나중에 실제 백엔드 연결 시 예시
-    // ====================================
+    const readNutrient = (nutrients, key) => {
+      if (!nutrients) return null;
 
-    /*
-    const fetchHomeData = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:8080/home"
-        );
-
-        setGraphData(response.data.graph);
-        setRecipes(response.data.recipes);
-
-      } catch (error) {
-        console.error(error);
+        const parsed = typeof nutrients === "string" ? JSON.parse(nutrients) : nutrients;
+        return parsed[key] ?? parsed[key.toUpperCase()] ?? null;
+      } catch {
+        return null;
       }
     };
 
-    fetchHomeData();
-    */
-  }, []);
+    const fetchRecipes = async () => {
+      if (!userProfile?.token || !userProfile?.userId) {
+        setRecipes([]);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/api/recipes/recommendations/health?userId=${userProfile.userId}&limit=5`,
+          {
+            headers: {
+              Authorization: `Bearer ${userProfile.token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        const detailedRecipes = await Promise.all(
+          data.map(async (recipe) => {
+            try {
+              const detailResponse = await fetch(`/api/recipes/${recipe.recipeId}`, {
+                headers: {
+                  Authorization: `Bearer ${userProfile.token}`,
+                },
+              });
+
+              if (!detailResponse.ok) {
+                throw new Error(`HTTP ${detailResponse.status}`);
+              }
+
+              return detailResponse.json();
+            } catch (error) {
+              console.error("홈 추천 레시피 상세 불러오기 실패:", error);
+              return recipe;
+            }
+          })
+        );
+
+        setRecipes(
+          detailedRecipes.map((recipe) => ({
+            id: recipe.recipeId,
+            category: recipe.category || recipe.giLevel || "추천",
+            name: recipe.title,
+            sugar: readNutrient(recipe.totalNutrients, "sugar"),
+            sodium: readNutrient(recipe.totalNutrients, "sodium"),
+            image: normalizeImageUrl(recipe.imageUri),
+          }))
+        );
+      } catch (error) {
+        console.error("홈 추천 레시피 불러오기 실패:", error);
+        setRecipes([]);
+      }
+    };
+
+    fetchRecipes();
+  }, [userProfile?.userId, userProfile?.token]);
 
   return (
     <div className="home-page">
@@ -99,7 +112,10 @@ function HomePage() {
 
 
       {/* 혈당 그래프 */}
-      <section className="section">
+      <section
+        className="section clickable-section"
+        onClick={() => setCurrentPage("glucose")}
+      >
         <h2>혈당 예측</h2>
 
         <div className="graph-box">
@@ -128,12 +144,23 @@ function HomePage() {
         <div className="section-title-row">
           <h2>오늘의 추천 레시피</h2>
 
-          <button className="more-btn">›</button>
+          <button
+            className="more-btn"
+            type="button"
+            onClick={() => setCurrentPage("recipeRecommend")}
+          >
+            ›
+          </button>
         </div>
 
-        <div className="recipe-list">
+        <div className="home-recipe-list">
           {recipes.map((recipe) => (
-            <div className="recipe-card" key={recipe.id}>
+            <button
+              className="home-recipe-card"
+              key={recipe.id}
+              type="button"
+              onClick={() => setCurrentPage("recipeRecommend")}
+            >
               <img
                 src={recipe.image}
                 alt={recipe.name}
@@ -146,10 +173,20 @@ function HomePage() {
               <h3>{recipe.name}</h3>
 
               <strong>
-                당류 {recipe.sugar}g, 나트륨 {recipe.sodium}g
+                당류 {recipe.sugar ?? "-"}g, 나트륨 {recipe.sodium ?? "-"}g
               </strong>
-            </div>
+            </button>
           ))}
+
+          {!recipes.length && (
+            <button
+              className="empty-recipe-card"
+              type="button"
+              onClick={() => setCurrentPage("recipeRecommend")}
+            >
+              추천 레시피를 확인해보세요
+            </button>
+          )}
         </div>
       </section>
     </div>

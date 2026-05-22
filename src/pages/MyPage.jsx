@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../styles/MyPage.css";
 
 function MyPage({ userProfile, setUserProfile }) {
@@ -8,6 +8,45 @@ function MyPage({ userProfile, setUserProfile }) {
   const [editHeight, setEditHeight] = useState(userProfile.height)
   const [editBirth, setEditBirth] = useState(userProfile.birth)
 
+  useEffect(() => {
+    const fetchMyPage = async () => {
+      if (!userProfile?.token) return
+
+      try {
+        const response = await fetch("/api/mypage/me", {
+          headers: {
+            Authorization: `Bearer ${userProfile.token}`,
+          },
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`)
+        }
+
+        const data = await response.json()
+        const nextProfile = {
+          ...userProfile,
+          userId: data.userId,
+          email: data.email,
+          nickname: data.username,
+          weight: data.weightKg ?? "",
+          height: data.heightCm ?? "",
+          birth: data.birthDate ?? "",
+        }
+
+        setUserProfile(nextProfile)
+        setEditNickname(nextProfile.nickname)
+        setEditWeight(nextProfile.weight)
+        setEditHeight(nextProfile.height)
+        setEditBirth(nextProfile.birth)
+      } catch (error) {
+        console.error("마이페이지 불러오기 실패:", error)
+      }
+    }
+
+    fetchMyPage()
+  }, [userProfile?.token])
+
   const now = new Date()
   const lastUpdate = userProfile.nicknameUpdatedAt
     ? new Date(userProfile.nicknameUpdatedAt)
@@ -16,30 +55,88 @@ function MyPage({ userProfile, setUserProfile }) {
   const canChangeNickname =
     !lastUpdate || now - lastUpdate > 7 * 24 * 60 * 60 * 1000
 
-  const handleSaveNickname = () => {
+  const saveProfile = async (nextProfile) => {
+    if (!userProfile?.token) {
+      setUserProfile(nextProfile)
+      return true
+    }
+
+    try {
+      const response = await fetch("/api/mypage/me", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userProfile.token}`,
+        },
+        body: JSON.stringify({
+          username: nextProfile.nickname,
+          birthDate: nextProfile.birth,
+          heightCm: nextProfile.height ? Number(nextProfile.height) : null,
+          weightKg: nextProfile.weight ? Number(nextProfile.weight) : null,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+
+      const data = await response.json()
+      setUserProfile({
+        ...nextProfile,
+        userId: data.userId,
+        email: data.email,
+        nickname: data.username,
+        birth: data.birthDate ?? "",
+        height: data.heightCm ?? "",
+        weight: data.weightKg ?? "",
+      })
+      return true
+    } catch (error) {
+      console.error("프로필 저장 실패:", error)
+      alert("프로필 저장에 실패했습니다.")
+      return false
+    }
+  }
+
+  const handleSaveNickname = async () => {
 
     if (!canChangeNickname) {
       alert("닉네임은 7일에 한 번만 변경할 수 있습니다.")
       return
     }
 
-    setUserProfile({
+    const saved = await saveProfile({
       ...userProfile,
       nickname: editNickname,
+      weight: editWeight,
+      height: editHeight,
+      birth: editBirth,
       nicknameUpdatedAt: new Date()
     })
 
+    if (saved) {
+      alert("닉네임이 저장되었습니다.")
+    }
   }
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
 
-    setUserProfile({
+    if (!editBirth) {
+      alert("생년월일을 입력해주세요.")
+      return
+    }
+
+    const saved = await saveProfile({
       ...userProfile,
+      nickname: editNickname,
       weight: editWeight,
       height: editHeight,
       birth: editBirth
     })
 
+    if (saved) {
+      alert("프로필이 저장되었습니다.")
+    }
   }
 
   return (
