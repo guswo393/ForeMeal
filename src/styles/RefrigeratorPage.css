@@ -1,0 +1,94 @@
+.refrigerator-page {
+  min-height: 100vh;
+  padding: 24px 22px 100px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.refrigerator-page h2 {
+  margin: 0 0 18px;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.pantry-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 8px;
+  background: #eef6ec;
+  margin-bottom: 18px;
+}
+
+.pantry-form input,
+.pantry-form select {
+  width: 100%;
+  height: 42px;
+  border: 1px solid #aac1aa;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #fff;
+  box-sizing: border-box;
+  font-size: 15px;
+}
+
+.pantry-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.pantry-form button,
+.pantry-card button {
+  height: 42px;
+  border: none;
+  border-radius: 8px;
+  background: #20c447;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pantry-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pantry-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #dde6dc;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.pantry-card h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.pantry-card p {
+  margin: 0 0 4px;
+  color: #555;
+}
+
+.pantry-card span {
+  color: #777;
+  font-size: 13px;
+}
+
+.pantry-card button {
+  width: 64px;
+  flex: 0 0 auto;
+  background: #444;
+}
+
+.pantry-empty {
+  color: #555;
+  font-weight: 700;
+}

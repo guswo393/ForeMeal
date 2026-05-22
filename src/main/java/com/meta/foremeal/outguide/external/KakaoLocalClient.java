@@ -16,14 +16,17 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class KakaoLocalClient {
 
     private static final String RESTAURANT_CATEGORY_GROUP_CODE = "FD6";
     private static final int MAX_RADIUS_METERS = 20_000;
-    private static final int MAX_SIZE = 15;
+    private static final int PAGE_SIZE = 15;
+    private static final int MAX_SIZE = 45;
 
     private final RestTemplate restTemplate;
     private final String baseUrl;
@@ -54,15 +57,135 @@ public class KakaoLocalClient {
 
         int safeRadius = Math.min(Math.max(radius, 100), MAX_RADIUS_METERS);
         int safeSize = Math.min(Math.max(size, 1), MAX_SIZE);
+        int maxPage = (int) Math.ceil((double) safeSize / PAGE_SIZE);
+        Map<String, OutGuideDto.RestaurantCandidate> candidates = new LinkedHashMap<>();
+
+        for (int page = 1; page <= maxPage && candidates.size() < safeSize; page++) {
+            String url = UriComponentsBuilder.fromUriString(baseUrl)
+                    .path("/v2/local/search/category.json")
+                    .queryParam("category_group_code", RESTAURANT_CATEGORY_GROUP_CODE)
+                    .queryParam("x", lng)
+                    .queryParam("y", lat)
+                    .queryParam("radius", safeRadius)
+                    .queryParam("sort", "distance")
+                    .queryParam("size", PAGE_SIZE)
+                    .queryParam("page", page)
+                    .build()
+                    .toUriString();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(HttpHeaders.AUTHORIZATION, "KakaoAK " + apiKey);
+
+            try {
+                ResponseEntity<KakaoLocalResponse> response = restTemplate.exchange(
+                        url,
+                        HttpMethod.GET,
+                        new HttpEntity<>(headers),
+                        KakaoLocalResponse.class
+                );
+
+                KakaoLocalResponse body = response.getBody();
+                if (body == null || body.documents() == null || body.documents().isEmpty()) {
+                    break;
+                }
+
+                body.documents().stream()
+                        .map(this::toCandidate)
+                        .forEach(candidate -> candidates.putIfAbsent(candidate.placeId(), candidate));
+            } catch (HttpClientErrorException e) {
+                throw new IllegalArgumentException("Kakao Local API request failed. Check kakao.local.rest-api-key and request parameters. status=" + e.getStatusCode());
+            } catch (RestClientException e) {
+                throw new IllegalStateException("Failed to search nearby restaurants from Kakao Local API.", e);
+            }
+        }
+
+        return candidates.values().stream()
+                .limit(safeSize)
+                .toList();
+    }
+
+    public List<OutGuideDto.RestaurantCandidate> searchRestaurantsByKeyword(
+            String query,
+            BigDecimal lat,
+            BigDecimal lng,
+            Integer radius,
+            int size
+    ) {
+        if (apiKey == null || apiKey.isBlank() || "sample".equalsIgnoreCase(apiKey)) {
+            String normalizedQuery = query == null ? "" : query.trim();
+            return sampleRestaurants(lat, lng).stream()
+                    .filter(candidate -> normalizedQuery.isBlank() || candidate.name().contains(normalizedQuery))
+                .toList();
+        }
+
+        Integer safeRadius = radius == null ? null : Math.min(Math.max(radius, 100), MAX_RADIUS_METERS);
+        int safeSize = Math.min(Math.max(size, 1), MAX_SIZE);
+        int maxPage = (int) Math.ceil((double) safeSize / PAGE_SIZE);
+        Map<String, OutGuideDto.RestaurantCandidate> candidates = new LinkedHashMap<>();
+
+        for (int page = 1; page <= maxPage && candidates.size() < safeSize; page++) {
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl)
+                    .path("/v2/local/search/keyword.json")
+                    .queryParam("query", query)
+                    .queryParam("category_group_code", RESTAURANT_CATEGORY_GROUP_CODE)
+                    .queryParam("sort", "distance")
+                    .queryParam("size", PAGE_SIZE)
+                    .queryParam("page", page);
+
+            if (lat != null && lng != null) {
+                builder
+                        .queryParam("x", lng)
+                        .queryParam("y", lat);
+
+                if (safeRadius != null) {
+                    builder.queryParam("radius", safeRadius);
+                }
+            }
+
+            String url = builder.build().toUriString();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(HttpHeaders.AUTHORIZATION, "KakaoAK " + apiKey);
+
+            try {
+                ResponseEntity<KakaoLocalResponse> response = restTemplate.exchange(
+                        url,
+                        HttpMethod.GET,
+                        new HttpEntity<>(headers),
+                        KakaoLocalResponse.class
+                );
+
+                KakaoLocalResponse body = response.getBody();
+                if (body == null || body.documents() == null || body.documents().isEmpty()) {
+                    break;
+                }
+
+                body.documents().stream()
+                        .map(this::toCandidate)
+                        .forEach(candidate -> candidates.putIfAbsent(candidate.placeId(), candidate));
+            } catch (HttpClientErrorException e) {
+                throw new IllegalArgumentException("Kakao Local keyword request failed. Check kakao.local.rest-api-key and request parameters. status=" + e.getStatusCode());
+            } catch (RestClientException e) {
+                throw new IllegalStateException("Failed to search nearby restaurants by keyword from Kakao Local API.", e);
+            }
+        }
+
+        return candidates.values().stream()
+                .limit(safeSize)
+                .toList();
+    }
+
+    public OutGuideDto.LocationResponse searchLocation(String query) {
+        if (apiKey == null || apiKey.isBlank() || "sample".equalsIgnoreCase(apiKey)) {
+            BigDecimal sampleLat = new BigDecimal("36.6010");
+            BigDecimal sampleLng = new BigDecimal("127.2988");
+            return new OutGuideDto.LocationResponse(query, query, sampleLat, sampleLng);
+        }
 
         String url = UriComponentsBuilder.fromUriString(baseUrl)
-                .path("/v2/local/search/category.json")
-                .queryParam("category_group_code", RESTAURANT_CATEGORY_GROUP_CODE)
-                .queryParam("x", lng)
-                .queryParam("y", lat)
-                .queryParam("radius", safeRadius)
-                .queryParam("sort", "distance")
-                .queryParam("size", safeSize)
+                .path("/v2/local/search/address.json")
+                .queryParam("query", query)
+                .queryParam("size", 1)
                 .build()
                 .toUriString();
 
@@ -70,25 +193,29 @@ public class KakaoLocalClient {
         headers.set(HttpHeaders.AUTHORIZATION, "KakaoAK " + apiKey);
 
         try {
-            ResponseEntity<KakaoLocalResponse> response = restTemplate.exchange(
+            ResponseEntity<KakaoAddressResponse> response = restTemplate.exchange(
                     url,
                     HttpMethod.GET,
                     new HttpEntity<>(headers),
-                    KakaoLocalResponse.class
+                    KakaoAddressResponse.class
             );
 
-            KakaoLocalResponse body = response.getBody();
-            if (body == null || body.documents() == null) {
-                return List.of();
+            KakaoAddressResponse body = response.getBody();
+            if (body == null || body.documents() == null || body.documents().isEmpty()) {
+                throw new IllegalArgumentException("주소 검색 결과가 없습니다: " + query);
             }
 
-            return body.documents().stream()
-                    .map(this::toCandidate)
-                    .toList();
+            KakaoAddress document = body.documents().get(0);
+            return new OutGuideDto.LocationResponse(
+                    query,
+                    addressNameOf(document),
+                    parseDecimal(document.y()),
+                    parseDecimal(document.x())
+            );
         } catch (HttpClientErrorException e) {
-            throw new IllegalArgumentException("Kakao Local API request failed. Check kakao.local.rest-api-key and request parameters. status=" + e.getStatusCode());
+            throw new IllegalArgumentException("Kakao address request failed. Check kakao.local.rest-api-key and request parameters. status=" + e.getStatusCode());
         } catch (RestClientException e) {
-            throw new IllegalStateException("Failed to search nearby restaurants from Kakao Local API.", e);
+            throw new IllegalStateException("Failed to search location from Kakao Local API.", e);
         }
     }
 
@@ -109,6 +236,13 @@ public class KakaoLocalClient {
             return place.roadAddressName();
         }
         return place.addressName();
+    }
+
+    private String addressNameOf(KakaoAddress address) {
+        if (address.roadAddress() != null && address.roadAddress().addressName() != null && !address.roadAddress().addressName().isBlank()) {
+            return address.roadAddress().addressName();
+        }
+        return address.addressName();
     }
 
     private Integer parseDistance(String distance) {
@@ -144,6 +278,8 @@ public class KakaoLocalClient {
 
     private record KakaoLocalResponse(List<KakaoPlace> documents) {}
 
+    private record KakaoAddressResponse(List<KakaoAddress> documents) {}
+
     private record KakaoPlace(
             String id,
             @JsonProperty("place_name") String placeName,
@@ -153,5 +289,16 @@ public class KakaoLocalClient {
             String x,
             String y,
             String distance
+    ) {}
+
+    private record KakaoAddress(
+            @JsonProperty("address_name") String addressName,
+            String x,
+            String y,
+            @JsonProperty("road_address") KakaoRoadAddress roadAddress
+    ) {}
+
+    private record KakaoRoadAddress(
+            @JsonProperty("address_name") String addressName
     ) {}
 }

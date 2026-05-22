@@ -1,0 +1,222 @@
+.home-page {
+  min-height: 100vh;
+  background-color: #ffffff;
+  padding: 18px;
+  padding-bottom: 90px;
+  box-sizing: border-box;
+}
+
+/* 검색창 */
+.search-box {
+  width: 100%;
+  height: 48px;
+  background-color: #f2f2f2;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+}
+
+.search-icon {
+  font-size: 30px;
+  color: #777777;
+  margin-right: 8px;
+}
+
+.search-box input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 17px;
+  color: #222222;
+}
+
+.search-box input::placeholder {
+  color: #8a8a8a;
+}
+
+/* 상단 빠른 메뉴 */
+.quick-menu {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 36px;
+}
+
+.quick-menu button {
+  flex: 1;
+  height: 38px;
+  border: 1px solid #dddddd;
+  background-color: #ffffff;
+  border-radius: 7px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #111111;
+  cursor: pointer;
+}
+
+/* 공통 섹션 */
+.section {
+  margin-bottom: 48px;
+}
+
+.clickable-section {
+  cursor: pointer;
+}
+
+.section h2 {
+  font-size: 21px;
+  font-weight: 800;
+  color: #000000;
+  margin: 0 0 18px;
+}
+
+/* 혈당 그래프 */
+.graph-box {
+  width: 100%;
+  height: 190px;
+  background-color: #ffffff;
+}
+
+.glucose-graph {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.axis {
+  stroke: #7d8799;
+  stroke-width: 2;
+}
+
+.line {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.blue {
+  stroke: #1f5b9e;
+}
+
+.yellow {
+  stroke: #f5bf00;
+}
+
+.green {
+  stroke: #4c9a3f;
+}
+
+/* 추천 레시피 제목 */
+.section-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.section-title-row h2 {
+  margin: 0;
+}
+
+.more-btn {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background-color: #eeeeee;
+  color: #111111;
+  font-size: 24px;
+  line-height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* 추천 레시피 가로 스크롤 */
+.home-recipe-list {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scroll-snap-type: x mandatory;
+}
+
+.home-recipe-list::-webkit-scrollbar {
+  display: none;
+}
+
+.home-recipe-card {
+  min-width: 178px;
+  scroll-snap-align: start;
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-recipe-card img {
+  width: 178px;
+  height: 178px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+}
+
+.recipe-category {
+  margin: 12px 0 4px;
+  font-size: 14px;
+  color: #777777;
+}
+
+.home-recipe-card h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111111;
+  margin: 0 0 6px;
+}
+
+.home-recipe-card strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111111;
+}
+
+.empty-recipe-card {
+  min-width: 178px;
+  height: 178px;
+  border: 1px solid #d8e7d8;
+  border-radius: 8px;
+  background: #f4faf3;
+  color: #1f5f2b;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* 모바일 화면 대응 */
+@media (max-width: 430px) {
+  .home-page {
+    padding: 16px;
+    padding-bottom: 90px;
+  }
+
+  .quick-menu button {
+    font-size: 14px;
+  }
+
+  .home-recipe-card {
+    min-width: 170px;
+  }
+
+  .home-recipe-card img {
+    width: 170px;
+    height: 170px;
+  }
+}
