@@ -10,7 +10,7 @@ from app.schemas import DetectedItem
 MODEL_NAME = os.getenv("YOLO_MODEL", "yolo11n.pt")
 FALLBACK_MODEL_NAME = os.getenv("YOLO_FALLBACK_MODEL", "yolo11n.pt")
 FALLBACK_ENABLED = os.getenv("YOLO_FALLBACK_ENABLED", "true").lower() == "true"
-CONFIDENCE_THRESHOLD = float(os.getenv("YOLO_CONFIDENCE", "0.25"))
+CONFIDENCE_THRESHOLD = float(os.getenv("YOLO_CONFIDENCE", "0.50"))
 FALLBACK_CONFIDENCE_THRESHOLD = float(os.getenv("YOLO_FALLBACK_CONFIDENCE", "0.25"))
 
 _models = {}
