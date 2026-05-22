@@ -1,0 +1,117 @@
+.delivery-page {
+  width: 100%;
+  min-height: 100vh;
+  background-color: white;
+  padding-bottom: 90px;
+  box-sizing: border-box;
+}
+
+.delivery-search-box {
+  margin: 20px 22px 10px;
+  height: 76px;
+  background-color: #f3f3f3;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.search-icon {
+  font-size: 34px;
+  color: #777;
+  margin-right: 12px;
+}
+
+.search-text {
+  font-size: 20px;
+  font-weight: 700;
+  flex: 1;
+}
+
+.edit-btn {
+  border: none;
+  background: none;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+.delivery-filter-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 22px 10px;
+}
+
+.filter-btn {
+  margin-right: 8px;
+  padding: 9px 13px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: white;
+  font-size: 15px;
+}
+
+.result-count {
+  font-size: 16px;
+}
+
+.map-area {
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+}
+
+.map-area img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.place-section {
+  margin-top: -10px;
+  padding: 14px 22px 0;
+  background-color: white;
+  border-radius: 22px 22px 0 0;
+  position: relative;
+}
+
+.select-btn {
+  width: 86px;
+  height: 38px;
+  border: none;
+  border-radius: 9px;
+  background-color: #2fc34a;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.place-card {
+  margin-top: 38px;
+}
+
+.place-image {
+  width: 100%;
+  height: 178px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.dot {
+  text-align: center;
+  font-size: 26px;
+  color: white;
+  margin-top: -28px;
+}
+
+.place-card h2 {
+  margin: 12px 0 4px;
+  font-size: 20px;
+}
+
+.place-card p {
+  margin: 0 0 12px;
+  color: #777;
+  font-size: 16px;
+}

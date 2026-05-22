@@ -1,0 +1,148 @@
+.glucose-page {
+  min-height: 100vh;
+  padding: 30px 20px 100px;
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
+
+.glucose-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.glucose-header h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.glucose-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.glucose-tabs button {
+  border: none;
+  border-radius: 20px;
+  padding: 10px 18px;
+  background-color: #f1f1f1;
+  color: #00610a;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.glucose-tabs button.active {
+  background-color: #00610a;
+  color: white;
+}
+
+.summary-row {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  flex: 1;
+  border: 1px solid #dddddd;
+  border-radius: 12px;
+  padding: 18px;
+  background-color: white;
+}
+
+.summary-card p {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.summary-card h1 {
+  margin: 0 0 10px;
+  font-size: 32px;
+  font-weight: 900;
+}
+
+.summary-card span {
+  color: #777777;
+  font-size: 14px;
+}
+
+.chart-card {
+  border: 1px solid #dddddd;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  background-color: white;
+}
+
+.chart-card h3 {
+  margin: 0 0 20px;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.chart-area {
+  height: 220px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 2px solid #e5e5e5;
+  padding-bottom: 10px;
+}
+
+.chart-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chart-bar {
+  width: 18px;
+  background-color: #00610a;
+  border-radius: 10px 10px 0 0;
+}
+
+.chart-item span {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #888888;
+}
+
+.glucose-input-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.glucose-input-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.glucose-input-form input,
+.glucose-input-form select {
+  height: 46px;
+  border: 1px solid #dddddd;
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 15px;
+}
+
+.glucose-input-form button {
+  height: 48px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 12px;
+  background-color: #00610a;
+  color: white;
+  font-size: 16px;
+  font-weight: 800;
+}
