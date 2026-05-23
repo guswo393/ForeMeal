@@ -347,27 +347,46 @@ function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFoo
       return null;
     }
 
-    const now = Date.now();
     const sorted = records
-      .map((record) => ({
-        ...record,
-        measuredDate: new Date(record.measuredAt),
-      }))
-      .filter((record) => !Number.isNaN(record.measuredDate.getTime()))
-      .sort((a, b) => b.measuredDate.getTime() - a.measuredDate.getTime());
+        .map((record) => ({
+          ...record,
+          measuredDate: new Date(record.measuredAt),
+        }))
+        .filter((record) => !Number.isNaN(record.measuredDate.getTime()))
+        .sort((a, b) => b.measuredDate.getTime() - a.measuredDate.getTime());
 
-    const similarTimeRecord = sorted.find(
-      (record) => Math.abs(now - record.measuredDate.getTime()) <= 4 * 60 * 60 * 1000
+    const fastingRecord = sorted.find(
+        (record) => record.measureType === "FASTING"
     );
 
-    return similarTimeRecord ?? sorted[0] ?? null;
-  };
-
-  const formatMeasuredTime = (measuredAt) => {
-    if (!measuredAt) {
-      return "";
+    if (fastingRecord) {
+      return {
+        ...fastingRecord,
+        baselineReason: "오늘 공복 혈당",
+      };
     }
-    return measuredAt.slice(11, 16);
+
+    const beforeMealRecord = sorted.find(
+        (record) => record.measureType === "BEFORE_MEAL"
+    );
+
+    if (beforeMealRecord) {
+      return {
+        ...beforeMealRecord,
+        baselineReason: "오늘 식사 전 혈당",
+      };
+    }
+
+    const latestRecord = sorted[0];
+
+    if (latestRecord) {
+      return {
+        ...latestRecord,
+        baselineReason: "오늘 최신 혈당",
+      };
+    }
+
+    return null;
   };
 
   useEffect(() => {
@@ -600,23 +619,29 @@ function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFoo
       )}
 
       {selectedFood && !baselineLoading && baselineRecord && (
-        <section className="prediction-guide-card">
-          <strong>기준 혈당 {baselineRecord.glucoseValue} mg/dl</strong>
-          <span>{formatMeasuredTime(baselineRecord.measuredAt)} 기록 기준으로 예측했어요.</span>
-        </section>
+          <section className="prediction-guide-card">
+            <strong>
+              현재 기준 혈당 {baselineRecord.glucoseValue} mg/dl
+            </strong>
+            <span>
+      {baselineRecord.baselineReason} 기준으로, 이 음식을 먹었을 때의 식후 혈당 변화를 예측해요.
+    </span>
+          </section>
       )}
 
       {selectedFood && !baselineLoading && !baselineRecord && (
-        <section className="prediction-guide-card prediction-empty-card">
-          <strong>혈당을 입력하고 예측 결과를 확인해보세요!</strong>
-          <span>오늘 기록된 혈당이 없어서 식후 혈당 예측에 사용할 기준값이 부족해요.</span>
-          <button
-            type="button"
-            onClick={() => setSelectedTab?.("input")}
-          >
-            입력하기
-          </button>
-        </section>
+          <section className="prediction-guide-card prediction-empty-card">
+            <strong>혈당 입력이 필요해요.</strong>
+            <span>
+      오늘 공복 혈당, 식사 전 혈당, 최신 혈당 기록이 없어 예측할 기준값이 부족해요.
+    </span>
+            <button
+                type="button"
+                onClick={() => setSelectedTab?.("input")}
+            >
+              혈당 입력하기
+            </button>
+          </section>
       )}
 
       {predicting && selectedFood && baselineRecord && (
@@ -626,22 +651,30 @@ function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFoo
       )}
 
       {predictionResult && (
-        <section className="prediction-result-card">
-          <p>예상 최고 혈당</p>
-          <h3>{Math.round(predictionResult.predictedPeak)} mg/dl</h3>
-          <span>위험도 {predictionResult.riskLevel}</span>
+          <section className="prediction-result-card">
+            <p>
+              현재 기준 혈당 {Math.round(predictionResult.baseGlucose)}에서 이 음식을 먹으면
+            </p>
+            <h3>
+              식후 최대 {Math.round(predictionResult.predictedPeak)} mg/dl
+            </h3>
+            <span>혈당 위험도 {predictionResult.riskLevel}</span>
 
-          {predictionResult.predictionCurve?.length > 0 && (
-            <div className="prediction-curve">
-              {predictionResult.predictionCurve.map((point) => (
-                <div className="prediction-point" key={point.minute}>
-                  <strong>{Math.round(point.glucoseMgdl)}</strong>
-                  <span>{point.minute}분</span>
+            {predictionResult.predictionCurve?.length > 0 && (
+                <div className="prediction-curve">
+                  {predictionResult.predictionCurve.map((point) => (
+                      <div className="prediction-point" key={point.minute}>
+                        <strong>{Math.round(point.glucoseMgdl)}</strong>
+                        <span>{point.minute}분</span>
+                      </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </section>
+            )}
+
+            {predictionResult.evidenceSummary && (
+                <p>{predictionResult.evidenceSummary}</p>
+            )}
+          </section>
       )}
     </div>
   );
