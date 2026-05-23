@@ -32,14 +32,17 @@ public class RecipeServiceTest {
     private final DailyIntakeSummaryRepository summaryRepository = mock(DailyIntakeSummaryRepository.class);
     private final GlucoseRepository glucoseRepository = mock(GlucoseRepository.class);
     private final FoodMasterRepository foodMasterRepository = mock(FoodMasterRepository.class);
+    private final RecipeNutritionCalculator nutritionCalculator = new RecipeNutritionCalculator(
+            foodMasterRepository,
+            new ObjectMapper()
+    );
     private final RecipeService recipeService = new RecipeService(
             recipeRepository,
             pantryItemRepository,
             healthProfileRepository,
             summaryRepository,
             glucoseRepository,
-            foodMasterRepository,
-            new ObjectMapper()
+            nutritionCalculator
     );
 
     @Test

@@ -16,6 +16,7 @@ function App() {
   const [authPage, setAuthPage] = useState('login')
   const [currentPage, setCurrentPage] = useState('home')
   const [recipeRecommendType, setRecipeRecommendType] = useState('health')
+  const [predictionFood, setPredictionFood] = useState(null)
 
   const [userProfile, setUserProfile] = useState({
     userId: '',
@@ -74,7 +75,13 @@ function App() {
     }
 
     if (currentPage === 'glucose') {
-      return <GlucosePage userProfile={userProfile} />
+      return (
+        <GlucosePage
+          userProfile={userProfile}
+          predictionFood={predictionFood}
+          clearPredictionFood={() => setPredictionFood(null)}
+        />
+      )
     }
 
     if (currentPage === 'meal') {
@@ -91,6 +98,8 @@ function App() {
         <RecipeRecommendPage
           userProfile={userProfile}
           recommendationType={recipeRecommendType}
+          setCurrentPage={setCurrentPage}
+          setPredictionFood={setPredictionFood}
         />
       )
     }

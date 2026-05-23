@@ -8,8 +8,11 @@ import com.meta.foremeal.foodmaster.repo.FoodMasterRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +26,27 @@ public class FoodService {
     //식품 검색
     @Transactional(readOnly = true)
     public List<FoodDto.Response> searchFoods(String name) {
-        return FoodDto.from(foodRepository.findByFoodNameContaining(name));
+        if (!StringUtils.hasText(name)) {
+            return List.of();
+        }
+
+        String keyword = name.trim();
+        Map<Long, FoodMasterEntity> results = new LinkedHashMap<>();
+
+        foodRepository.findByFoodNameContainingIgnoreCase(keyword)
+                .forEach(food -> results.put(food.getFoodId(), food));
+
+        if (results.isEmpty()) {
+            for (String token : keyword.split("\\s+")) {
+                if (token.length() < 2) {
+                    continue;
+                }
+                foodRepository.findByFoodNameContainingIgnoreCase(token)
+                        .forEach(food -> results.put(food.getFoodId(), food));
+            }
+        }
+
+        return FoodDto.from(results.values().stream().limit(20).toList());
     }
 
     //식품 상세 조회 (id 기준)

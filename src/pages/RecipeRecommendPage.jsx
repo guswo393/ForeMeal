@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import "../styles/RecipeRecommendPage.css";
 
-function RecipeRecommendPage({ userProfile, recommendationType = "health" }) {
+function RecipeRecommendPage({
+  userProfile,
+  recommendationType = "health",
+  setCurrentPage,
+  setPredictionFood,
+}) {
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -64,6 +69,8 @@ function RecipeRecommendPage({ userProfile, recommendationType = "health" }) {
           protein: readNutrient(recipe.totalNutrients, "protein"),
           sugar: readNutrient(recipe.totalNutrients, "sugar"),
           sodium: readNutrient(recipe.totalNutrients, "sodium"),
+          totalNutrients: recipe.totalNutrients,
+          recipeId: recipe.recipeId,
           imageUrl: normalizeImageUrl(recipe.imageUri),
           description: recipe.description,
           giLevel: recipe.giLevel,
@@ -103,6 +110,23 @@ function RecipeRecommendPage({ userProfile, recommendationType = "health" }) {
     } finally {
       setDetailLoading(false);
     }
+  };
+
+  const handlePredictGlucose = (recipe) => {
+    if (!setCurrentPage || !setPredictionFood) {
+      return;
+    }
+
+    setPredictionFood({
+      recipeId: recipe.recipeId ?? recipe.id,
+      name: recipe.title ?? recipe.name,
+      calories: Number(recipe.totalCalories ?? recipe.calories ?? 0),
+      carbs: Number(readNutrient(recipe.totalNutrients, "carbs") ?? recipe.carbs ?? 0),
+      sugar: Number(readNutrient(recipe.totalNutrients, "sugar") ?? recipe.sugar ?? 0),
+      sodium: Number(readNutrient(recipe.totalNutrients, "sodium") ?? recipe.sodium ?? 0),
+      quantity: 1,
+    });
+    setCurrentPage("glucose");
   };
 
   return (
@@ -145,14 +169,24 @@ function RecipeRecommendPage({ userProfile, recommendationType = "health" }) {
                   </div>
                 )}
 
-                <button
-                  className="recipe-detail-btn"
-                  type="button"
-                  onClick={() => handleOpenDetail(recipe.id)}
-                  disabled={detailLoading}
-                >
-                  자세히 보기
-                </button>
+                <div className="recipe-card-actions">
+                  <button
+                    className="recipe-detail-btn"
+                    type="button"
+                    onClick={() => handleOpenDetail(recipe.id)}
+                    disabled={detailLoading}
+                  >
+                    자세히 보기
+                  </button>
+
+                  <button
+                    className="recipe-predict-btn"
+                    type="button"
+                    onClick={() => handlePredictGlucose(recipe)}
+                  >
+                    혈당 예측
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -221,6 +255,14 @@ function RecipeRecommendPage({ userProfile, recommendationType = "health" }) {
                 <p>등록된 조리방법이 없습니다.</p>
               )}
             </section>
+
+            <button
+              className="recipe-detail-predict-btn"
+              type="button"
+              onClick={() => handlePredictGlucose(selectedRecipe)}
+            >
+              이 레시피로 혈당 예측
+            </button>
           </div>
         </div>
       )}

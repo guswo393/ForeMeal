@@ -1,9 +1,5 @@
 package com.meta.foremeal.recipe.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.meta.foremeal.foodmaster.domain.FoodMasterEntity;
-import com.meta.foremeal.foodmaster.repo.FoodMasterRepository;
 import com.meta.foremeal.health.domain.Glucose;
 import com.meta.foremeal.health.domain.HealthGoal;
 import com.meta.foremeal.health.domain.HealthProfile;
@@ -24,18 +20,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class RecipeService {
@@ -45,23 +36,20 @@ public class RecipeService {
     private final HealthProfileRepository healthProfileRepository;
     private final DailyIntakeSummaryRepository summaryRepository;
     private final GlucoseRepository glucoseRepository;
-    private final FoodMasterRepository foodMasterRepository;
-    private final ObjectMapper objectMapper;
+    private final RecipeNutritionCalculator nutritionCalculator;
 
     public RecipeService(RecipeRepository recipeRepository,
                           PantryItemRepository pantryItemRepository,
                           HealthProfileRepository healthProfileRepository,
                           DailyIntakeSummaryRepository summaryRepository,
                           GlucoseRepository glucoseRepository,
-                          FoodMasterRepository foodMasterRepository,
-                          ObjectMapper objectMapper) {
+                          RecipeNutritionCalculator nutritionCalculator) {
         this.recipeRepository = recipeRepository;
         this.pantryItemRepository = pantryItemRepository;
         this.healthProfileRepository = healthProfileRepository;
         this.summaryRepository = summaryRepository;
         this.glucoseRepository = glucoseRepository;
-        this.foodMasterRepository = foodMasterRepository;
-        this.objectMapper = objectMapper;
+        this.nutritionCalculator = nutritionCalculator;
     }
 
     @Transactional
@@ -264,6 +252,8 @@ public class RecipeService {
                 ))
                 .toList();
 
+        RecipeNutritionCalculator.Result nutrition = nutritionCalculator.calculate(recipe);
+
         return new RecipeDto.Response(
                 recipe.getRecipeId(),
                 recipe.getTitle(),
@@ -273,8 +263,8 @@ public class RecipeService {
                 recipe.getDifficulty(),
                 recipe.getCookingTime(),
                 recipe.getServings(),
-                recipe.getTotalCalories(),
-                displayNutrients(recipe),
+                nutrition.calories(),
+                nutrition.nutrientsJson(),
                 recipe.getGiLevel(),
                 recipe.getImageUri(),
                 ingredients,
@@ -333,6 +323,7 @@ public class RecipeService {
         int totalIngredients = matchedIngredients.size() + missingIngredients.size();
         double matchRate = totalIngredients == 0 ? 0.0 : (double) matchedIngredients.size() / totalIngredients;
         HealthScore healthScore = calculateHealthScore(recipe, healthContext);
+        RecipeNutritionCalculator.Result nutrition = nutritionCalculator.calculate(recipe);
 
         return new RecipeDto.RecommendationResponse(
                 recipe.getRecipeId(),
@@ -345,8 +336,8 @@ public class RecipeService {
                 recipe.getServings(),
                 recipe.getGiLevel(),
                 recipe.getImageUri(),
-                recipe.getTotalCalories(),
-                displayNutrients(recipe),
+                nutrition.calories(),
+                nutrition.nutrientsJson(),
                 healthScore.score(),
                 matchedIngredients.size(),
                 missingIngredients.size(),
@@ -475,11 +466,12 @@ public class RecipeService {
     private HealthScore calculateHealthScore(Recipe recipe, HealthContext context) {
         double score = 70.0;
         List<String> reasons = new ArrayList<>();
+        RecipeNutritionCalculator.Result nutrition = nutritionCalculator.calculate(recipe);
 
-        double calories = recipe.getTotalCalories() == null ? 0.0 : recipe.getTotalCalories().doubleValue();
-        double carbs = nutrient(recipe, "carbs");
-        double sugar = nutrient(recipe, "sugar");
-        double sodium = nutrient(recipe, "sodium");
+        double calories = nutrition.calories() == null ? 0.0 : nutrition.calories().doubleValue();
+        double carbs = nutrition.nutrients().getOrDefault("carbs", 0.0);
+        double sugar = nutrition.nutrients().getOrDefault("sugar", 0.0);
+        double sodium = nutrition.nutrients().getOrDefault("sodium", 0.0);
         String giLevel = recipe.getGiLevel() == null ? "" : recipe.getGiLevel().toUpperCase(Locale.ROOT);
         double remainingCalories = context.targetCalories() - context.todayCalories();
 
@@ -547,187 +539,6 @@ public class RecipeService {
         }
 
         return new HealthScore(Math.max(0.0, Math.min(100.0, Math.round(score * 10.0) / 10.0)), reasons);
-    }
-
-    private double nutrient(Recipe recipe, String key) {
-        return nutrientMap(recipe).getOrDefault(key, 0.0);
-    }
-
-    private String displayNutrients(Recipe recipe) {
-        try {
-            return objectMapper.writeValueAsString(nutrientMap(recipe));
-        } catch (Exception e) {
-            return recipe.getTotalNutrients();
-        }
-    }
-
-    private Map<String, Double> nutrientMap(Recipe recipe) {
-        Map<String, Double> nutrients = parseNutrients(recipe.getTotalNutrients());
-        Map<String, Double> estimated = estimateNutrientsFromIngredients(recipe);
-
-        estimated.forEach((key, value) -> {
-            if (value != null && value > 0.0 && !nutrients.containsKey(key)) {
-                nutrients.put(key, value);
-            }
-        });
-
-        return nutrients;
-    }
-
-    private Map<String, Double> parseNutrients(String totalNutrients) {
-        Map<String, Double> nutrients = new LinkedHashMap<>();
-        if (!StringUtils.hasText(totalNutrients)) {
-            return nutrients;
-        }
-
-        try {
-            JsonNode node = objectMapper.readTree(totalNutrients);
-            addNutrient(nutrients, "carbs", node, "carbs", "CARBS", "carbohydrate");
-            addNutrient(nutrients, "protein", node, "protein", "PROTEIN");
-            addNutrient(nutrients, "fat", node, "fat", "FAT");
-            addNutrient(nutrients, "sugar", node, "sugar", "SUGAR", "sugars");
-            addNutrient(nutrients, "sodium", node, "sodium", "SODIUM", "na", "NA");
-        } catch (Exception ignored) {
-            return nutrients;
-        }
-
-        return nutrients;
-    }
-
-    private void addNutrient(Map<String, Double> nutrients, String targetKey, JsonNode node, String... sourceKeys) {
-        for (String sourceKey : sourceKeys) {
-            JsonNode value = node.get(sourceKey);
-            if (value != null && value.isNumber()) {
-                nutrients.put(targetKey, roundOne(value.doubleValue()));
-                return;
-            }
-        }
-    }
-
-    private Map<String, Double> estimateNutrientsFromIngredients(Recipe recipe) {
-        List<Long> foodIds = recipe.getIngredients().stream()
-                .map(RecipeIngredient::getFoodId)
-                .filter(foodId -> foodId != null)
-                .distinct()
-                .toList();
-
-        List<FoodMasterEntity> foods = foodIds.isEmpty() ? List.of() : foodMasterRepository.findAllById(foodIds);
-        if (foods == null) {
-            foods = List.of();
-        }
-
-        Map<Long, FoodMasterEntity> foodsById = foods.stream()
-                .collect(Collectors.toMap(FoodMasterEntity::getFoodId, food -> food));
-
-        Map<String, Double> totals = new LinkedHashMap<>();
-        for (RecipeIngredient ingredient : recipe.getIngredients()) {
-            FoodMasterEntity food = ingredient.getFoodId() == null ? null : foodsById.get(ingredient.getFoodId());
-            if (food == null) {
-                food = findFoodByIngredientName(ingredient.getIngredientName());
-            }
-            if (food == null) {
-                continue;
-            }
-
-            double factor = ingredientFactor(ingredient);
-            addEstimatedNutrient(totals, "carbs", food.getCarbs(), factor);
-            addEstimatedNutrient(totals, "protein", food.getProtein(), factor);
-            addEstimatedNutrient(totals, "fat", food.getFat(), factor);
-            addEstimatedNutrient(totals, "sugar", food.getSugar(), factor);
-            addEstimatedNutrient(totals, "sodium", food.getSodium(), factor);
-        }
-
-        totals.replaceAll((key, value) -> roundOne(value));
-        return totals;
-    }
-
-    private FoodMasterEntity findFoodByIngredientName(String ingredientName) {
-        for (String ingredientPart : splitIngredientName(ingredientName)) {
-            FoodMasterEntity food = findFoodByName(ingredientPart);
-            if (food != null) {
-                return food;
-            }
-
-            for (String token : ingredientSearchTokens(ingredientPart)) {
-                food = findFoodByName(token);
-                if (food != null) {
-                    return food;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private List<String> ingredientSearchTokens(String ingredientName) {
-        String cleaned = cleanIngredientPart(ingredientName);
-        if (!StringUtils.hasText(cleaned)) {
-            return List.of();
-        }
-
-        List<String> tokens = new ArrayList<>();
-        for (String token : cleaned.split("\\s+")) {
-            String normalized = token
-                    .replaceAll("(으로|로|와|과|은|는|이|가|을|를)$", "")
-                    .trim();
-            if (normalized.length() >= 2) {
-                addUnique(tokens, normalized);
-            }
-        }
-
-        return tokens;
-    }
-
-    private FoodMasterEntity findFoodByName(String ingredientName) {
-        String normalizedIngredient = normalizeName(ingredientName);
-        if (normalizedIngredient == null) {
-            return null;
-        }
-
-        return foodMasterRepository.findByFoodNameContainingIgnoreCase(ingredientName)
-                .stream()
-                .filter(food -> {
-                    String normalizedFoodName = normalizeName(food.getFoodName());
-                    return normalizedFoodName != null
-                            && (normalizedFoodName.equals(normalizedIngredient)
-                            || normalizedFoodName.contains(normalizedIngredient)
-                            || normalizedIngredient.contains(normalizedFoodName));
-                })
-                .min(Comparator.comparingInt(food -> food.getFoodName().length()))
-                .orElse(null);
-    }
-
-    private double ingredientFactor(RecipeIngredient ingredient) {
-        if (ingredient.getQuantity() == null || ingredient.getQuantity().signum() <= 0) {
-            return 1.0;
-        }
-
-        double quantity = ingredient.getQuantity().doubleValue();
-        String unit = ingredient.getUnit() == null ? "" : ingredient.getUnit().toLowerCase(Locale.ROOT);
-
-        if (unit.contains("kg")) {
-            return quantity * 10.0;
-        }
-        if (unit.contains("g") || unit.contains("그램") || unit.contains("ml")) {
-            return quantity / 100.0;
-        }
-        if ("l".equals(unit) || unit.contains("리터")) {
-            return quantity * 10.0;
-        }
-
-        return Math.max(1.0, quantity);
-    }
-
-    private void addEstimatedNutrient(Map<String, Double> totals, String key, Double valuePer100g, double factor) {
-        if (valuePer100g == null || valuePer100g <= 0.0) {
-            return;
-        }
-
-        totals.merge(key, valuePer100g * factor, Double::sum);
-    }
-
-    private double roundOne(double value) {
-        return Math.round(value * 10.0) / 10.0;
     }
 
     private void addNormalizedName(Set<String> names, String value) {

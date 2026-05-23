@@ -1,6 +1,7 @@
 package com.meta.foremeal.meallog.api;
 
 import com.meta.foremeal.global.security.principal.CustomUserPrincipal;
+import com.meta.foremeal.meallog.api.dto.PredictionFoodSearchResponse;
 import com.meta.foremeal.meallog.api.dto.PredictionRequest;
 import com.meta.foremeal.meallog.api.dto.PredictionResponse;
 import com.meta.foremeal.meallog.domain.DailyVitalSummary;
@@ -36,5 +37,14 @@ public class GlucosePredictionController {
             throw new IllegalArgumentException("Login is required to read prediction graph data.");
         }
         return glucosePredictionService.getGraphData(principal.getUserId());
+    }
+
+    @GetMapping("/foods/search")
+    public List<PredictionFoodSearchResponse> searchPredictionFoods(@AuthenticationPrincipal CustomUserPrincipal principal,
+                                                                    @RequestParam String query) {
+        if (principal == null) {
+            throw new IllegalArgumentException("Login is required to search prediction foods.");
+        }
+        return glucosePredictionService.searchPredictionFoods(query);
     }
 }
