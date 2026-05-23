@@ -68,7 +68,7 @@ function LoginPage({ setIsLoggedIn, setUserProfile, setAuthPage, signupUser }) {
   return (
     <div className="login-container">
       <div className="login-box">
-        <h1 className="login-title">ForeMeal</h1>
+        <h1 className="login-title">Fore:Meal</h1>
         <p className="login-subtitle">맞춤 식단 관리 시작하기</p>
 
         <input

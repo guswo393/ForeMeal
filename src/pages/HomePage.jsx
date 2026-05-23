@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "../styles/HomePage.css";
 
-function HomePage({ userProfile, setCurrentPage }) {
+function HomePage({ userProfile, setCurrentPage, setRecipeRecommendType }) {
   const [graphData, setGraphData] = useState({
     pastLine: "",
     predictionYellow: "",
@@ -9,6 +9,7 @@ function HomePage({ userProfile, setCurrentPage }) {
   });
 
   const [recipes, setRecipes] = useState([]);
+  const [pantryRecipes, setPantryRecipes] = useState([]);
 
   useEffect(() => {
     setGraphData({
@@ -39,62 +40,88 @@ function HomePage({ userProfile, setCurrentPage }) {
       }
     };
 
+    const fetchRecipeDetails = async (recipes) => {
+      return Promise.all(
+        recipes.map(async (recipe) => {
+          try {
+            const detailResponse = await fetch(`/api/recipes/${recipe.recipeId}`, {
+              headers: {
+                Authorization: `Bearer ${userProfile.token}`,
+              },
+            });
+
+            if (!detailResponse.ok) {
+              throw new Error(`HTTP ${detailResponse.status}`);
+            }
+
+            const detail = await detailResponse.json();
+            return {
+              ...detail,
+              matchedIngredientCount: recipe.matchedIngredientCount,
+              missingIngredientCount: recipe.missingIngredientCount,
+              matchRate: recipe.matchRate,
+              matchedIngredients: recipe.matchedIngredients ?? [],
+            };
+          } catch (error) {
+            console.error("홈 추천 레시피 상세 불러오기 실패:", error);
+            return recipe;
+          }
+        })
+      );
+    };
+
+    const mapRecipeCards = (recipes) =>
+      recipes.map((recipe) => ({
+        id: recipe.recipeId,
+        category: recipe.category || recipe.giLevel || "추천",
+        name: recipe.title,
+        sugar: readNutrient(recipe.totalNutrients, "sugar"),
+        sodium: readNutrient(recipe.totalNutrients, "sodium"),
+        image: normalizeImageUrl(recipe.imageUri),
+        matchRate: recipe.matchRate,
+        matchedIngredients: recipe.matchedIngredients ?? [],
+      }));
+
     const fetchRecipes = async () => {
       if (!userProfile?.token || !userProfile?.userId) {
         setRecipes([]);
+        setPantryRecipes([]);
         return;
       }
 
       try {
-        const response = await fetch(
-          `/api/recipes/recommendations/health?userId=${userProfile.userId}&limit=5`,
-          {
-            headers: {
-              Authorization: `Bearer ${userProfile.token}`,
-            },
-          }
-        );
+        const headers = {
+          Authorization: `Bearer ${userProfile.token}`,
+        };
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+        const [healthResponse, pantryResponse] = await Promise.all([
+          fetch(`/api/recipes/recommendations/health?userId=${userProfile.userId}&limit=5`, { headers }),
+          fetch(`/api/recipes/recommendations/pantry?userId=${userProfile.userId}&limit=5`, { headers }),
+        ]);
+
+        if (!healthResponse.ok) {
+          throw new Error(`health HTTP ${healthResponse.status}`);
         }
 
-        const data = await response.json();
+        if (!pantryResponse.ok) {
+          throw new Error(`pantry HTTP ${pantryResponse.status}`);
+        }
 
-        const detailedRecipes = await Promise.all(
-          data.map(async (recipe) => {
-            try {
-              const detailResponse = await fetch(`/api/recipes/${recipe.recipeId}`, {
-                headers: {
-                  Authorization: `Bearer ${userProfile.token}`,
-                },
-              });
+        const [healthData, pantryData] = await Promise.all([
+          healthResponse.json(),
+          pantryResponse.json(),
+        ]);
+        const [detailedHealthRecipes, detailedPantryRecipes] = await Promise.all([
+          fetchRecipeDetails(healthData),
+          fetchRecipeDetails(pantryData),
+        ]);
 
-              if (!detailResponse.ok) {
-                throw new Error(`HTTP ${detailResponse.status}`);
-              }
-
-              return detailResponse.json();
-            } catch (error) {
-              console.error("홈 추천 레시피 상세 불러오기 실패:", error);
-              return recipe;
-            }
-          })
-        );
-
-        setRecipes(
-          detailedRecipes.map((recipe) => ({
-            id: recipe.recipeId,
-            category: recipe.category || recipe.giLevel || "추천",
-            name: recipe.title,
-            sugar: readNutrient(recipe.totalNutrients, "sugar"),
-            sodium: readNutrient(recipe.totalNutrients, "sodium"),
-            image: normalizeImageUrl(recipe.imageUri),
-          }))
-        );
+        setRecipes(mapRecipeCards(detailedHealthRecipes));
+        setPantryRecipes(mapRecipeCards(detailedPantryRecipes));
       } catch (error) {
         console.error("홈 추천 레시피 불러오기 실패:", error);
         setRecipes([]);
+        setPantryRecipes([]);
       }
     };
 
@@ -113,7 +140,7 @@ function HomePage({ userProfile, setCurrentPage }) {
 
       {/* 혈당 그래프 */}
       <section
-        className="section clickable-section"
+        className="section glucose-section clickable-section"
         onClick={() => setCurrentPage("glucose")}
       >
         <h2>혈당 예측</h2>
@@ -140,56 +167,85 @@ function HomePage({ userProfile, setCurrentPage }) {
       </section>
 
       {/* 추천 레시피 */}
-      <section className="section recipe-section">
-        <div className="section-title-row">
-          <h2>오늘의 추천 레시피</h2>
+      <RecipeSection
+        title="오늘의 추천 레시피"
+        recipes={recipes}
+        onOpen={() => {
+          setRecipeRecommendType("health");
+          setCurrentPage("recipeRecommend");
+        }}
+      />
 
-          <button
-            className="more-btn"
-            type="button"
-            onClick={() => setCurrentPage("recipeRecommend")}
-          >
-            ›
-          </button>
-        </div>
-
-        <div className="home-recipe-list">
-          {recipes.map((recipe) => (
-            <button
-              className="home-recipe-card"
-              key={recipe.id}
-              type="button"
-              onClick={() => setCurrentPage("recipeRecommend")}
-            >
-              <img
-                src={recipe.image}
-                alt={recipe.name}
-              />
-
-              <p className="recipe-category">
-                {recipe.category}
-              </p>
-
-              <h3>{recipe.name}</h3>
-
-              <strong>
-                당류 {recipe.sugar ?? "-"}g, 나트륨 {recipe.sodium ?? "-"}g
-              </strong>
-            </button>
-          ))}
-
-          {!recipes.length && (
-            <button
-              className="empty-recipe-card"
-              type="button"
-              onClick={() => setCurrentPage("recipeRecommend")}
-            >
-              추천 레시피를 확인해보세요
-            </button>
-          )}
-        </div>
-      </section>
+      <RecipeSection
+        title="내 재료로 만드는 레시피"
+        recipes={pantryRecipes}
+        showPantryMatch
+        onOpen={() => {
+          setRecipeRecommendType("pantry");
+          setCurrentPage("recipeRecommend");
+        }}
+      />
     </div>
+  );
+}
+
+function RecipeSection({ title, recipes, showPantryMatch = false, onOpen }) {
+  return (
+    <section className="section recipe-section">
+      <div className="section-title-row">
+        <h2>{title}</h2>
+
+        <button
+          className="more-btn"
+          type="button"
+          onClick={onOpen}
+        >
+          ›
+        </button>
+      </div>
+
+      <div className="home-recipe-list">
+        {recipes.map((recipe) => (
+          <button
+            className="home-recipe-card"
+            key={recipe.id}
+            type="button"
+            onClick={onOpen}
+          >
+            <img
+              src={recipe.image}
+              alt={recipe.name}
+            />
+
+            <p className="recipe-category">
+              {recipe.category}
+            </p>
+
+            <h3>{recipe.name}</h3>
+
+            {showPantryMatch && recipe.matchedIngredients.length > 0 && (
+              <p className="pantry-match-text">
+                보유 재료 : {recipe.matchedIngredients.slice(0, 2).join(", ")}
+              </p>
+            )}
+
+            <strong>
+              당류 {recipe.sugar ?? "-"}g, 나트륨 {recipe.sodium ?? "-"}mg
+            </strong>
+          </button>
+        ))}
+
+        {!recipes.length && (
+          <button
+            className="empty-recipe-card"
+            type="button"
+            onClick={onOpen}
+          >
+            추천 레시피를 확인해보세요
+          </button>
+        )}
+      </div>
+    </section>
   );
 }
 

@@ -24,6 +24,10 @@ function DeliveryPage({ userProfile }) {
     lat: "36.6010",
     lng: "127.2988",
   });
+  const [currentCoords, setCurrentCoords] = useState({
+    lat: "36.6010",
+    lng: "127.2988",
+  });
   const [places, setPlaces] = useState([]);
   const [selectedFilter, setSelectedFilter] = useState("전체");
   const [selectedSort, setSelectedSort] = useState("가까운순");
@@ -43,6 +47,10 @@ function DeliveryPage({ userProfile }) {
           lat: position.coords.latitude.toFixed(6),
           lng: position.coords.longitude.toFixed(6),
         });
+        setCurrentCoords({
+          lat: position.coords.latitude.toFixed(6),
+          lng: position.coords.longitude.toFixed(6),
+        });
         setLocation("현재 위치");
         setLocationReady(true);
       },
@@ -56,7 +64,7 @@ function DeliveryPage({ userProfile }) {
   useEffect(() => {
     if (!locationReady) return;
     fetchDeliveryPlaces();
-  }, [userProfile?.token, coords.lat, coords.lng, appliedQuery, locationReady]);
+  }, [userProfile?.token, coords.lat, coords.lng, appliedQuery, searchScope, locationReady]);
 
   const fetchDeliveryPlaces = async () => {
     try {
@@ -70,9 +78,11 @@ function DeliveryPage({ userProfile }) {
       const queryParam = appliedQuery
         ? `query=${encodeURIComponent(appliedQuery)}`
         : "";
-      const locationParams = searchScope === "nearby"
-        ? `lat=${coords.lat}&lng=${coords.lng}&radius=3000`
-        : "";
+      const locationParams = searchScope === "keyword"
+        ? `lat=${currentCoords.lat}&lng=${currentCoords.lng}`
+        : searchScope === "nearby"
+          ? `lat=${coords.lat}&lng=${coords.lng}&radius=3000`
+          : "";
       const requestParams = [locationParams, queryParam]
         .filter(Boolean)
         .join("&");
@@ -110,6 +120,10 @@ function DeliveryPage({ userProfile }) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setCoords({
+          lat: position.coords.latitude.toFixed(6),
+          lng: position.coords.longitude.toFixed(6),
+        });
+        setCurrentCoords({
           lat: position.coords.latitude.toFixed(6),
           lng: position.coords.longitude.toFixed(6),
         });
@@ -174,7 +188,7 @@ function DeliveryPage({ userProfile }) {
     }
 
     setAppliedQuery(query);
-    setSearchScope("global");
+    setSearchScope("keyword");
   };
 
   const handleSubmitSearch = () => {
@@ -192,8 +206,9 @@ function DeliveryPage({ userProfile }) {
   };
 
   const handleClearSearch = () => {
-    setSearchText(location);
+    setSearchText("");
     setAppliedQuery("");
+    setSearchScope("nearby");
   };
 
   const getCategoryText = (place) => place.categoryDetail || place.category || "";
@@ -312,10 +327,10 @@ function DeliveryPage({ userProfile }) {
       <div className="map-area">
         <ResultMap
           center={coords}
-          location={searchScope === "global" && appliedQuery ? "식당명 검색" : location}
+          location={searchScope === "keyword" && appliedQuery ? "현재 위치 기준 식당명 검색" : location}
           query={appliedQuery}
           places={filteredPlaces}
-          useResultBounds={searchScope === "global"}
+          useResultBounds={searchScope === "keyword"}
         />
       </div>
 

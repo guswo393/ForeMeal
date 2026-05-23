@@ -5,6 +5,7 @@ import com.meta.foremeal.health.repo.GlucoseRepository;
 import com.meta.foremeal.health.repo.HealthProfileRepository;
 import com.meta.foremeal.meallog.repo.DailyIntakeSummaryRepository;
 import com.meta.foremeal.foodmaster.domain.FoodMasterEntity;
+import com.meta.foremeal.foodmaster.repo.FoodMasterRepository;
 import com.meta.foremeal.pantry.domain.PantryItem;
 import com.meta.foremeal.pantry.repository.PantryItemRepository;
 import com.meta.foremeal.recipe.domain.Recipe;
@@ -30,12 +31,14 @@ public class RecipeServiceTest {
     private final HealthProfileRepository healthProfileRepository = mock(HealthProfileRepository.class);
     private final DailyIntakeSummaryRepository summaryRepository = mock(DailyIntakeSummaryRepository.class);
     private final GlucoseRepository glucoseRepository = mock(GlucoseRepository.class);
+    private final FoodMasterRepository foodMasterRepository = mock(FoodMasterRepository.class);
     private final RecipeService recipeService = new RecipeService(
             recipeRepository,
             pantryItemRepository,
             healthProfileRepository,
             summaryRepository,
             glucoseRepository,
+            foodMasterRepository,
             new ObjectMapper()
     );
 

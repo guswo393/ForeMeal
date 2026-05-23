@@ -111,6 +111,8 @@ public class RecipeDto {
             Integer servings,
             String giLevel,
             String imageUri,
+            BigDecimal totalCalories,
+            String totalNutrients,
             double healthScore,
             int matchedIngredientCount,
             int missingIngredientCount,

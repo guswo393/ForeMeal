@@ -5,10 +5,38 @@
   box-sizing: border-box;
 }
 
+.refrigerator-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
 .refrigerator-page h2 {
   margin: 0 0 18px;
   font-size: 26px;
   font-weight: 800;
+}
+
+.refrigerator-header h2 {
+  margin: 0;
+}
+
+.camera-btn {
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid #dde6dc;
+  border-radius: 6px;
+  background: #fff;
+  color: #222;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.camera-input {
+  display: none;
 }
 
 .pantry-form {
@@ -91,4 +119,80 @@
 .pantry-empty {
   color: #555;
   font-weight: 700;
+}
+
+.scan-panel {
+  padding: 16px;
+  border: 1px solid #d8e7d8;
+  border-radius: 8px;
+  background: #f7fbf6;
+  margin-bottom: 18px;
+}
+
+.scan-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.scan-panel-header h3 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.scan-panel-header button {
+  border: none;
+  background: transparent;
+  color: #555;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.scan-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #fff;
+  margin-bottom: 10px;
+}
+
+.scan-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.scan-check em {
+  margin-left: auto;
+  color: #1d6b2c;
+  font-style: normal;
+  font-size: 13px;
+}
+
+.scan-item input,
+.scan-item select {
+  width: 100%;
+  height: 38px;
+  border: 1px solid #aac1aa;
+  border-radius: 8px;
+  padding: 0 10px;
+  background: #fff;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+
+.scan-save-btn {
+  width: 100%;
+  height: 42px;
+  border: none;
+  border-radius: 8px;
+  background: #20c447;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
 }

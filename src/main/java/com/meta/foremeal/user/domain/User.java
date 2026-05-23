@@ -3,6 +3,7 @@ package com.meta.foremeal.user.domain;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
@@ -28,6 +29,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
     private UserRole role;
+
+    @Column(name = "password_changed_at")
+    private LocalDateTime passwordChangedAt;
 
     protected User() {
     }
@@ -68,6 +72,10 @@ public class User {
         return role;
     }
 
+    public LocalDateTime getPasswordChangedAt() {
+        return passwordChangedAt;
+    }
+
     public void update(String username, LocalDate birthDate) {
         this.username = username;
         this.birthDate = birthDate;
@@ -75,6 +83,7 @@ public class User {
 
     public void changePassword(String password) {
         this.password = password;
+        this.passwordChangedAt = LocalDateTime.now();
     }
 
     public void changeRole(UserRole role) {
