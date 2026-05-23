@@ -1,6 +1,6 @@
 import "../styles/MealRecommendPage.css";
 
-function MealRecommendPage({ setCurrentPage }) {
+function MealRecommendPage({ setCurrentPage, setRecipeRecommendType }) {
   const menuItems = [
     {
       id: 1,
@@ -22,6 +22,14 @@ function MealRecommendPage({ setCurrentPage }) {
     },
   ];
 
+  const openPage = (item) => {
+    if (item.page === "recipeRecommend") {
+      setRecipeRecommendType("health");
+    }
+
+    setCurrentPage(item.page);
+  };
+
   return (
     <div className="meal-page">
       {menuItems.map((item) => (
@@ -30,10 +38,10 @@ function MealRecommendPage({ setCurrentPage }) {
           key={item.id}
           role="button"
           tabIndex={0}
-          onClick={() => setCurrentPage(item.page)}
+          onClick={() => openPage(item)}
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") {
-              setCurrentPage(item.page);
+              openPage(item);
             }
           }}
         >
@@ -50,7 +58,7 @@ function MealRecommendPage({ setCurrentPage }) {
               type="button"
               onClick={(event) => {
                 event.stopPropagation();
-                setCurrentPage(item.page);
+                openPage(item);
               }}
             >
               선택

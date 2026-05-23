@@ -17,6 +17,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.LinkedHashMap;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +25,7 @@ import java.util.Map;
 public class KakaoLocalClient {
 
     private static final String RESTAURANT_CATEGORY_GROUP_CODE = "FD6";
+    private static final String CAFE_CATEGORY_GROUP_CODE = "CE7";
     private static final int MAX_RADIUS_METERS = 20_000;
     private static final int PAGE_SIZE = 15;
     private static final int MAX_SIZE = 45;
@@ -120,26 +122,74 @@ public class KakaoLocalClient {
 
         Integer safeRadius = radius == null ? null : Math.min(Math.max(radius, 100), MAX_RADIUS_METERS);
         int safeSize = Math.min(Math.max(size, 1), MAX_SIZE);
-        int maxPage = (int) Math.ceil((double) safeSize / PAGE_SIZE);
+        int perCategorySize = Math.max(PAGE_SIZE, (int) Math.ceil((double) safeSize / 2));
         Map<String, OutGuideDto.RestaurantCandidate> candidates = new LinkedHashMap<>();
 
-        for (int page = 1; page <= maxPage && candidates.size() < safeSize; page++) {
+        searchRestaurantsByKeywordCategory(query, lat, lng, safeRadius, perCategorySize, CAFE_CATEGORY_GROUP_CODE, candidates);
+        searchRestaurantsByKeywordCategory(query, lat, lng, safeRadius, perCategorySize, RESTAURANT_CATEGORY_GROUP_CODE, candidates);
+
+        String normalizedQuery = normalize(query);
+        List<OutGuideDto.RestaurantCandidate> nameMatched = candidates.values().stream()
+                .filter(candidate -> normalize(candidate.name()).contains(normalizedQuery))
+                .sorted(keywordComparator(normalizedQuery))
+                .limit(safeSize)
+                .toList();
+
+        if (!nameMatched.isEmpty()) {
+            return nameMatched;
+        }
+
+        return candidates.values().stream()
+                .sorted(keywordComparator(normalizedQuery))
+                .limit(safeSize)
+                .toList();
+    }
+
+    private Comparator<OutGuideDto.RestaurantCandidate> keywordComparator(String normalizedQuery) {
+        return Comparator
+                .comparing((OutGuideDto.RestaurantCandidate candidate) -> !normalize(candidate.name()).contains(normalizedQuery))
+                .thenComparing(candidate -> candidate.distanceMeters() == null ? Integer.MAX_VALUE : candidate.distanceMeters())
+                .thenComparing(OutGuideDto.RestaurantCandidate::name);
+    }
+
+    private String normalize(String text) {
+        if (text == null) {
+            return "";
+        }
+        return text.replaceAll("\\s+", "").toLowerCase();
+    }
+
+    private void searchRestaurantsByKeywordCategory(
+            String query,
+            BigDecimal lat,
+            BigDecimal lng,
+            Integer safeRadius,
+            int size,
+            String categoryGroupCode,
+            Map<String, OutGuideDto.RestaurantCandidate> candidates
+    ) {
+        int safeSize = Math.min(Math.max(size, 1), MAX_SIZE);
+        int maxPage = (int) Math.ceil((double) safeSize / PAGE_SIZE);
+
+        for (int page = 1; page <= maxPage && candidates.size() < MAX_SIZE; page++) {
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl)
                     .path("/v2/local/search/keyword.json")
                     .queryParam("query", query)
-                    .queryParam("category_group_code", RESTAURANT_CATEGORY_GROUP_CODE)
-                    .queryParam("sort", "distance")
+                    .queryParam("category_group_code", categoryGroupCode)
                     .queryParam("size", PAGE_SIZE)
                     .queryParam("page", page);
 
             if (lat != null && lng != null) {
                 builder
                         .queryParam("x", lng)
-                        .queryParam("y", lat);
+                        .queryParam("y", lat)
+                        .queryParam("sort", "distance");
 
                 if (safeRadius != null) {
                     builder.queryParam("radius", safeRadius);
                 }
+            } else {
+                builder.queryParam("sort", "accuracy");
             }
 
             String url = builder.build().toUriString();
@@ -169,10 +219,6 @@ public class KakaoLocalClient {
                 throw new IllegalStateException("Failed to search nearby restaurants by keyword from Kakao Local API.", e);
             }
         }
-
-        return candidates.values().stream()
-                .limit(safeSize)
-                .toList();
     }
 
     public OutGuideDto.LocationResponse searchLocation(String query) {

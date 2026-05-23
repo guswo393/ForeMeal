@@ -14,9 +14,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 @Service
 @Transactional
 public class UserService {
+
+    private static final Duration PASSWORD_CHANGE_INTERVAL = Duration.ofDays(7);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -70,6 +75,7 @@ public class UserService {
     public void changePassword(Long userId, UserDto.ChangePasswordRequest request) {
         User user = findUser(userId);
         validatePassword(user, request.currentPassword());
+        validatePasswordChangeInterval(user);
         user.changePassword(passwordEncoder.encode(request.newPassword()));
     }
 
@@ -91,6 +97,18 @@ public class UserService {
     private void validatePassword(User user, String rawPassword) {
         if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
             throw new InvalidPasswordException();
+        }
+    }
+
+    private void validatePasswordChangeInterval(User user) {
+        LocalDateTime passwordChangedAt = user.getPasswordChangedAt();
+        if (passwordChangedAt == null) {
+            return;
+        }
+
+        LocalDateTime nextAllowedAt = passwordChangedAt.plus(PASSWORD_CHANGE_INTERVAL);
+        if (LocalDateTime.now().isBefore(nextAllowedAt)) {
+            throw new IllegalStateException("비밀번호는 7일에 한 번만 변경할 수 있습니다.");
         }
     }
 

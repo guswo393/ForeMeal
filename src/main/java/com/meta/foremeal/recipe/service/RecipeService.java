@@ -2,6 +2,8 @@ package com.meta.foremeal.recipe.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.meta.foremeal.foodmaster.domain.FoodMasterEntity;
+import com.meta.foremeal.foodmaster.repo.FoodMasterRepository;
 import com.meta.foremeal.health.domain.Glucose;
 import com.meta.foremeal.health.domain.HealthGoal;
 import com.meta.foremeal.health.domain.HealthProfile;
@@ -22,14 +24,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class RecipeService {
@@ -39,19 +45,22 @@ public class RecipeService {
     private final HealthProfileRepository healthProfileRepository;
     private final DailyIntakeSummaryRepository summaryRepository;
     private final GlucoseRepository glucoseRepository;
+    private final FoodMasterRepository foodMasterRepository;
     private final ObjectMapper objectMapper;
 
     public RecipeService(RecipeRepository recipeRepository,
-                         PantryItemRepository pantryItemRepository,
-                         HealthProfileRepository healthProfileRepository,
-                         DailyIntakeSummaryRepository summaryRepository,
-                         GlucoseRepository glucoseRepository,
-                         ObjectMapper objectMapper) {
+                          PantryItemRepository pantryItemRepository,
+                          HealthProfileRepository healthProfileRepository,
+                          DailyIntakeSummaryRepository summaryRepository,
+                          GlucoseRepository glucoseRepository,
+                          FoodMasterRepository foodMasterRepository,
+                          ObjectMapper objectMapper) {
         this.recipeRepository = recipeRepository;
         this.pantryItemRepository = pantryItemRepository;
         this.healthProfileRepository = healthProfileRepository;
         this.summaryRepository = summaryRepository;
         this.glucoseRepository = glucoseRepository;
+        this.foodMasterRepository = foodMasterRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -265,7 +274,7 @@ public class RecipeService {
                 recipe.getCookingTime(),
                 recipe.getServings(),
                 recipe.getTotalCalories(),
-                recipe.getTotalNutrients(),
+                displayNutrients(recipe),
                 recipe.getGiLevel(),
                 recipe.getImageUri(),
                 ingredients,
@@ -293,10 +302,31 @@ public class RecipeService {
         List<String> missingIngredients = new ArrayList<>();
 
         for (RecipeIngredient ingredient : recipe.getIngredients()) {
-            if (matchesPantry(ingredient, pantryFoodIds, pantryNames)) {
-                matchedIngredients.add(ingredient.getIngredientName());
-            } else {
-                missingIngredients.add(ingredient.getIngredientName());
+            List<String> ingredientParts = splitIngredientName(ingredient.getIngredientName());
+
+            if (ingredient.getFoodId() != null && pantryFoodIds.contains(ingredient.getFoodId())) {
+                addUnique(matchedIngredients, ingredientParts.isEmpty() ? ingredient.getIngredientName() : ingredientParts.get(0));
+                continue;
+            }
+
+            if (ingredientParts.isEmpty()) {
+                continue;
+            }
+
+            for (String ingredientPart : ingredientParts) {
+                if (matchesPantryName(ingredientPart, pantryNames)) {
+                    addUnique(matchedIngredients, ingredientPart);
+                } else {
+                    addUnique(missingIngredients, ingredientPart);
+                }
+            }
+        }
+
+        if (matchedIngredients.isEmpty() && !pantryFoodIds.isEmpty()) {
+            for (RecipeIngredient ingredient : recipe.getIngredients()) {
+                if (ingredient.getFoodId() != null && pantryFoodIds.contains(ingredient.getFoodId())) {
+                    addUnique(matchedIngredients, ingredient.getIngredientName());
+                }
             }
         }
 
@@ -315,6 +345,8 @@ public class RecipeService {
                 recipe.getServings(),
                 recipe.getGiLevel(),
                 recipe.getImageUri(),
+                recipe.getTotalCalories(),
+                displayNutrients(recipe),
                 healthScore.score(),
                 matchedIngredients.size(),
                 missingIngredients.size(),
@@ -325,18 +357,90 @@ public class RecipeService {
         );
     }
 
+    private List<String> splitIngredientName(String ingredientName) {
+        if (!StringUtils.hasText(ingredientName)) {
+            return List.of();
+        }
+
+        String normalized = ingredientName
+                .replace("\r", "\n")
+                .replace("ㆍ", ",")
+                .replace("·", ",")
+                .replace("，", ",")
+                .replace(";", ",");
+
+        List<String> parts = new ArrayList<>();
+        for (String rawPart : normalized.split("[,\\n]+")) {
+            String cleaned = cleanIngredientPart(rawPart);
+            if (StringUtils.hasText(cleaned)) {
+                addUnique(parts, cleaned);
+            }
+        }
+
+        if (parts.isEmpty()) {
+            String cleaned = cleanIngredientPart(ingredientName);
+            if (StringUtils.hasText(cleaned)) {
+                parts.add(cleaned);
+            }
+        }
+
+        return parts;
+    }
+
+    private String cleanIngredientPart(String value) {
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+
+        String cleaned = value.replaceAll("^[^:：]*[:：]\\s*", "")
+                .replaceAll("\\([^)]*\\)", " ")
+                .replaceAll("\\d+(?:\\.\\d+)?(?:/\\d+)?\\s*(?:g|kg|ml|l|개|장|쪽|알|큰술|작은술|컵|cm|T|t)", " ")
+                .replaceAll("\\d+(?:\\.\\d+)?(?:/\\d+)?", " ")
+                .replaceAll("[\\[\\]{}()]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+
+        return StringUtils.hasText(cleaned) ? cleaned : null;
+    }
+
+    private void addUnique(List<String> values, String value) {
+        if (StringUtils.hasText(value) && !values.contains(value)) {
+            values.add(value);
+        }
+    }
+
     private boolean matchesPantry(RecipeIngredient ingredient, Set<Long> pantryFoodIds, Set<String> pantryNames) {
         if (ingredient.getFoodId() != null && pantryFoodIds.contains(ingredient.getFoodId())) {
             return true;
         }
 
-        String ingredientName = normalizeName(ingredient.getIngredientName());
+        for (String ingredientPart : splitIngredientName(ingredient.getIngredientName())) {
+            if (matchesPantryName(ingredientPart, pantryNames)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean matchesPantryName(String ingredientPart, Set<String> pantryNames) {
+        String ingredientName = normalizeName(ingredientPart);
         if (ingredientName == null) {
             return false;
         }
 
         return pantryNames.stream()
-                .anyMatch(pantryName -> pantryName.contains(ingredientName) || ingredientName.contains(pantryName));
+                .anyMatch(pantryName -> {
+                    if (pantryName.equals(ingredientName)) {
+                        return true;
+                    }
+
+                    if (pantryName.length() < 2 || ingredientName.length() < 2) {
+                        return false;
+                    }
+
+                    return pantryName.contains(ingredientName) || ingredientName.contains(pantryName);
+                });
     }
 
     private HealthContext loadHealthContext(Long userId) {
@@ -446,17 +550,184 @@ public class RecipeService {
     }
 
     private double nutrient(Recipe recipe, String key) {
-        if (!StringUtils.hasText(recipe.getTotalNutrients())) {
-            return 0.0;
+        return nutrientMap(recipe).getOrDefault(key, 0.0);
+    }
+
+    private String displayNutrients(Recipe recipe) {
+        try {
+            return objectMapper.writeValueAsString(nutrientMap(recipe));
+        } catch (Exception e) {
+            return recipe.getTotalNutrients();
+        }
+    }
+
+    private Map<String, Double> nutrientMap(Recipe recipe) {
+        Map<String, Double> nutrients = parseNutrients(recipe.getTotalNutrients());
+        Map<String, Double> estimated = estimateNutrientsFromIngredients(recipe);
+
+        estimated.forEach((key, value) -> {
+            if (value != null && value > 0.0 && !nutrients.containsKey(key)) {
+                nutrients.put(key, value);
+            }
+        });
+
+        return nutrients;
+    }
+
+    private Map<String, Double> parseNutrients(String totalNutrients) {
+        Map<String, Double> nutrients = new LinkedHashMap<>();
+        if (!StringUtils.hasText(totalNutrients)) {
+            return nutrients;
         }
 
         try {
-            JsonNode node = objectMapper.readTree(recipe.getTotalNutrients());
-            JsonNode value = node.get(key);
-            return value == null || !value.isNumber() ? 0.0 : value.doubleValue();
-        } catch (Exception e) {
-            return 0.0;
+            JsonNode node = objectMapper.readTree(totalNutrients);
+            addNutrient(nutrients, "carbs", node, "carbs", "CARBS", "carbohydrate");
+            addNutrient(nutrients, "protein", node, "protein", "PROTEIN");
+            addNutrient(nutrients, "fat", node, "fat", "FAT");
+            addNutrient(nutrients, "sugar", node, "sugar", "SUGAR", "sugars");
+            addNutrient(nutrients, "sodium", node, "sodium", "SODIUM", "na", "NA");
+        } catch (Exception ignored) {
+            return nutrients;
         }
+
+        return nutrients;
+    }
+
+    private void addNutrient(Map<String, Double> nutrients, String targetKey, JsonNode node, String... sourceKeys) {
+        for (String sourceKey : sourceKeys) {
+            JsonNode value = node.get(sourceKey);
+            if (value != null && value.isNumber()) {
+                nutrients.put(targetKey, roundOne(value.doubleValue()));
+                return;
+            }
+        }
+    }
+
+    private Map<String, Double> estimateNutrientsFromIngredients(Recipe recipe) {
+        List<Long> foodIds = recipe.getIngredients().stream()
+                .map(RecipeIngredient::getFoodId)
+                .filter(foodId -> foodId != null)
+                .distinct()
+                .toList();
+
+        List<FoodMasterEntity> foods = foodIds.isEmpty() ? List.of() : foodMasterRepository.findAllById(foodIds);
+        if (foods == null) {
+            foods = List.of();
+        }
+
+        Map<Long, FoodMasterEntity> foodsById = foods.stream()
+                .collect(Collectors.toMap(FoodMasterEntity::getFoodId, food -> food));
+
+        Map<String, Double> totals = new LinkedHashMap<>();
+        for (RecipeIngredient ingredient : recipe.getIngredients()) {
+            FoodMasterEntity food = ingredient.getFoodId() == null ? null : foodsById.get(ingredient.getFoodId());
+            if (food == null) {
+                food = findFoodByIngredientName(ingredient.getIngredientName());
+            }
+            if (food == null) {
+                continue;
+            }
+
+            double factor = ingredientFactor(ingredient);
+            addEstimatedNutrient(totals, "carbs", food.getCarbs(), factor);
+            addEstimatedNutrient(totals, "protein", food.getProtein(), factor);
+            addEstimatedNutrient(totals, "fat", food.getFat(), factor);
+            addEstimatedNutrient(totals, "sugar", food.getSugar(), factor);
+            addEstimatedNutrient(totals, "sodium", food.getSodium(), factor);
+        }
+
+        totals.replaceAll((key, value) -> roundOne(value));
+        return totals;
+    }
+
+    private FoodMasterEntity findFoodByIngredientName(String ingredientName) {
+        for (String ingredientPart : splitIngredientName(ingredientName)) {
+            FoodMasterEntity food = findFoodByName(ingredientPart);
+            if (food != null) {
+                return food;
+            }
+
+            for (String token : ingredientSearchTokens(ingredientPart)) {
+                food = findFoodByName(token);
+                if (food != null) {
+                    return food;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private List<String> ingredientSearchTokens(String ingredientName) {
+        String cleaned = cleanIngredientPart(ingredientName);
+        if (!StringUtils.hasText(cleaned)) {
+            return List.of();
+        }
+
+        List<String> tokens = new ArrayList<>();
+        for (String token : cleaned.split("\\s+")) {
+            String normalized = token
+                    .replaceAll("(으로|로|와|과|은|는|이|가|을|를)$", "")
+                    .trim();
+            if (normalized.length() >= 2) {
+                addUnique(tokens, normalized);
+            }
+        }
+
+        return tokens;
+    }
+
+    private FoodMasterEntity findFoodByName(String ingredientName) {
+        String normalizedIngredient = normalizeName(ingredientName);
+        if (normalizedIngredient == null) {
+            return null;
+        }
+
+        return foodMasterRepository.findByFoodNameContainingIgnoreCase(ingredientName)
+                .stream()
+                .filter(food -> {
+                    String normalizedFoodName = normalizeName(food.getFoodName());
+                    return normalizedFoodName != null
+                            && (normalizedFoodName.equals(normalizedIngredient)
+                            || normalizedFoodName.contains(normalizedIngredient)
+                            || normalizedIngredient.contains(normalizedFoodName));
+                })
+                .min(Comparator.comparingInt(food -> food.getFoodName().length()))
+                .orElse(null);
+    }
+
+    private double ingredientFactor(RecipeIngredient ingredient) {
+        if (ingredient.getQuantity() == null || ingredient.getQuantity().signum() <= 0) {
+            return 1.0;
+        }
+
+        double quantity = ingredient.getQuantity().doubleValue();
+        String unit = ingredient.getUnit() == null ? "" : ingredient.getUnit().toLowerCase(Locale.ROOT);
+
+        if (unit.contains("kg")) {
+            return quantity * 10.0;
+        }
+        if (unit.contains("g") || unit.contains("그램") || unit.contains("ml")) {
+            return quantity / 100.0;
+        }
+        if ("l".equals(unit) || unit.contains("리터")) {
+            return quantity * 10.0;
+        }
+
+        return Math.max(1.0, quantity);
+    }
+
+    private void addEstimatedNutrient(Map<String, Double> totals, String key, Double valuePer100g, double factor) {
+        if (valuePer100g == null || valuePer100g <= 0.0) {
+            return;
+        }
+
+        totals.merge(key, valuePer100g * factor, Double::sum);
+    }
+
+    private double roundOne(double value) {
+        return Math.round(value * 10.0) / 10.0;
     }
 
     private void addNormalizedName(Set<String> names, String value) {

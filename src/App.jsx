@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import Header from './components/Header'
+import { useEffect, useState } from 'react'
 import BottomNav from './components/BottomNav'
 import HomePage from './pages/HomePage'
 import GlucosePage from './pages/GlucosePage'
@@ -16,6 +15,7 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [authPage, setAuthPage] = useState('login')
   const [currentPage, setCurrentPage] = useState('home')
+  const [recipeRecommendType, setRecipeRecommendType] = useState('health')
 
   const [userProfile, setUserProfile] = useState({
     userId: '',
@@ -35,6 +35,10 @@ function App() {
     height: '',
     birth: ''
   })
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [currentPage, recipeRecommendType])
 
   if (!isLoggedIn) {
     if (authPage === 'signup') {
@@ -64,6 +68,7 @@ function App() {
           userName={userProfile.nickname}
           userProfile={userProfile}
           setCurrentPage={setCurrentPage}
+          setRecipeRecommendType={setRecipeRecommendType}
         />
       )
     }
@@ -73,11 +78,21 @@ function App() {
     }
 
     if (currentPage === 'meal') {
-      return <MealRecommendPage setCurrentPage={setCurrentPage} />
+      return (
+        <MealRecommendPage
+          setCurrentPage={setCurrentPage}
+          setRecipeRecommendType={setRecipeRecommendType}
+        />
+      )
     }
 
     if (currentPage === 'recipeRecommend') {
-      return <RecipeRecommendPage userProfile={userProfile} />
+      return (
+        <RecipeRecommendPage
+          userProfile={userProfile}
+          recommendationType={recipeRecommendType}
+        />
+      )
     }
 
     if (currentPage === 'delivery') {
@@ -102,13 +117,18 @@ function App() {
       )
     }
 
-    return <HomePage userName={userProfile.nickname} />
+    return (
+      <HomePage
+        userName={userProfile.nickname}
+        userProfile={userProfile}
+        setCurrentPage={setCurrentPage}
+        setRecipeRecommendType={setRecipeRecommendType}
+      />
+    )
   }
 
   return (
     <div className="app-container">
-      <Header currentPage={currentPage} />
-
       <main className="main-content">
         {renderPage()}
       </main>

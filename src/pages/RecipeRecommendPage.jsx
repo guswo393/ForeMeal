@@ -1,15 +1,21 @@
 import { useEffect, useState } from "react";
 import "../styles/RecipeRecommendPage.css";
 
-function RecipeRecommendPage({ userProfile }) {
+function RecipeRecommendPage({ userProfile, recommendationType = "health" }) {
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const isPantryRecommendation = recommendationType === "pantry";
+
+  const pageTitle = isPantryRecommendation ? "내 재료로 만드는 레시피" : "추천 레시피";
+  const pageSubtitle = isPantryRecommendation
+    ? "냉장고에 등록된 재료로 만들 수 있는 음식이에요"
+    : "혈당 관리를 위한 추천 음식이에요";
 
   useEffect(() => {
     fetchRecommendedRecipes();
-  }, [userProfile?.userId, userProfile?.token]);
+  }, [userProfile?.userId, userProfile?.token, recommendationType]);
 
   const normalizeImageUrl = (imageUri) => {
     if (!imageUri) return "/images/recipe.jpg";
@@ -36,8 +42,9 @@ function RecipeRecommendPage({ userProfile }) {
         ? { Authorization: `Bearer ${userProfile.token}` }
         : {};
 
+      const recommendationPath = isPantryRecommendation ? "pantry" : "health";
       const recommendUrl = userProfile?.userId
-        ? `/api/recipes/recommendations/health?userId=${userProfile.userId}&limit=10`
+        ? `/api/recipes/recommendations/${recommendationPath}?userId=${userProfile.userId}&limit=10`
         : "/api/recipes";
 
       const response = await fetch(recommendUrl, { headers });
@@ -56,10 +63,14 @@ function RecipeRecommendPage({ userProfile }) {
           carbs: readNutrient(recipe.totalNutrients, "carbs"),
           protein: readNutrient(recipe.totalNutrients, "protein"),
           sugar: readNutrient(recipe.totalNutrients, "sugar"),
+          sodium: readNutrient(recipe.totalNutrients, "sodium"),
           imageUrl: normalizeImageUrl(recipe.imageUri),
           description: recipe.description,
           giLevel: recipe.giLevel,
           reasons: recipe.reasons ?? [],
+          matchRate: recipe.matchRate ?? 0,
+          matchedIngredients: recipe.matchedIngredients ?? [],
+          missingIngredientCount: recipe.missingIngredientCount ?? 0,
         }))
       );
     } catch (error) {
@@ -96,8 +107,8 @@ function RecipeRecommendPage({ userProfile }) {
 
   return (
     <div className="recipe-page">
-      <h1>추천 레시피</h1>
-      <p className="recipe-subtitle">혈당 관리를 위한 추천 음식이에요</p>
+      <h1>{pageTitle}</h1>
+      <p className="recipe-subtitle">{pageSubtitle}</p>
 
       {loading ? (
         <p>추천 음식을 불러오는 중...</p>
@@ -115,12 +126,24 @@ function RecipeRecommendPage({ userProfile }) {
                 <h2>{recipe.name}</h2>
 
                 <div className="recipe-nutrition">
-                  {recipe.calories && <span>{recipe.calories} kcal</span>}
-                  {recipe.carbs && <span>탄수화물 {recipe.carbs}g</span>}
-                  {recipe.protein && <span>단백질 {recipe.protein}g</span>}
-                  {recipe.sugar && <span>당류 {recipe.sugar}g</span>}
+                  {recipe.calories != null && <span>{recipe.calories} kcal</span>}
+                  {recipe.carbs != null && <span>탄수화물 {recipe.carbs}g</span>}
+                  {recipe.protein != null && <span>단백질 {recipe.protein}g</span>}
+                  {recipe.sugar != null && <span>당류 {recipe.sugar}g</span>}
+                  {recipe.sodium != null && <span>나트륨 {recipe.sodium}mg</span>}
                   {recipe.giLevel && <span>GI {recipe.giLevel}</span>}
                 </div>
+
+                {isPantryRecommendation && (
+                  <div className="recipe-match-info">
+                    <strong>보유 재료 : {Math.round(recipe.matchRate * 100)}% 매칭</strong>
+                    {recipe.matchedIngredients.length > 0 ? (
+                      <span>{recipe.matchedIngredients.join(", ")}</span>
+                    ) : (
+                      <span>냉장고 재료와 직접 매칭된 항목이 없어요</span>
+                    )}
+                  </div>
+                )}
 
                 <button
                   className="recipe-detail-btn"
