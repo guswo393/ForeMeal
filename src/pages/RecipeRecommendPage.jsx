@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import "../styles/RecipeRecommendPage.css";
 
-function RecipeRecommendPage({ userProfile, recommendationType = "health" }) {
+function RecipeRecommendPage({
+  userProfile,
+  recommendationType = "health",
+  setCurrentPage,
+  setPredictionFood,
+}) {
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -12,6 +17,8 @@ function RecipeRecommendPage({ userProfile, recommendationType = "health" }) {
   const pageSubtitle = isPantryRecommendation
     ? "냉장고에 등록된 재료로 만들 수 있는 음식이에요"
     : "혈당 관리를 위한 추천 음식이에요";
+  const hasLowNutritionConfidence = (recipe) =>
+    recipe?.nutritionConfidence != null && Number(recipe.nutritionConfidence) < 0.7;
 
   useEffect(() => {
     fetchRecommendedRecipes();
@@ -64,9 +71,14 @@ function RecipeRecommendPage({ userProfile, recommendationType = "health" }) {
           protein: readNutrient(recipe.totalNutrients, "protein"),
           sugar: readNutrient(recipe.totalNutrients, "sugar"),
           sodium: readNutrient(recipe.totalNutrients, "sodium"),
+          totalNutrients: recipe.totalNutrients,
+          recipeId: recipe.recipeId,
           imageUrl: normalizeImageUrl(recipe.imageUri),
           description: recipe.description,
           giLevel: recipe.giLevel,
+          nutritionSource: recipe.nutritionSource,
+          nutritionConfidence: recipe.nutritionConfidence,
+          nutritionWarnings: recipe.nutritionWarnings ?? [],
           reasons: recipe.reasons ?? [],
           matchRate: recipe.matchRate ?? 0,
           matchedIngredients: recipe.matchedIngredients ?? [],
@@ -105,6 +117,26 @@ function RecipeRecommendPage({ userProfile, recommendationType = "health" }) {
     }
   };
 
+  const handlePredictGlucose = (recipe) => {
+    if (!setCurrentPage || !setPredictionFood) {
+      return;
+    }
+
+    setPredictionFood({
+      recipeId: recipe.recipeId ?? recipe.id,
+      name: recipe.title ?? recipe.name,
+      calories: Number(recipe.totalCalories ?? recipe.calories ?? 0),
+      carbs: Number(readNutrient(recipe.totalNutrients, "carbs") ?? recipe.carbs ?? 0),
+      sugar: Number(readNutrient(recipe.totalNutrients, "sugar") ?? recipe.sugar ?? 0),
+      sodium: Number(readNutrient(recipe.totalNutrients, "sodium") ?? recipe.sodium ?? 0),
+      nutritionSource: recipe.nutritionSource ?? null,
+      nutritionConfidence: recipe.nutritionConfidence ?? null,
+      nutritionWarnings: recipe.nutritionWarnings ?? [],
+      quantity: 1,
+    });
+    setCurrentPage("glucose");
+  };
+
   return (
     <div className="recipe-page">
       <h1>{pageTitle}</h1>
@@ -134,6 +166,12 @@ function RecipeRecommendPage({ userProfile, recommendationType = "health" }) {
                   {recipe.giLevel && <span>GI {recipe.giLevel}</span>}
                 </div>
 
+                {hasLowNutritionConfidence(recipe) && (
+                  <p className="recipe-nutrition-warning">
+                    섭취량 또는 영양값을 확인해주세요
+                  </p>
+                )}
+
                 {isPantryRecommendation && (
                   <div className="recipe-match-info">
                     <strong>보유 재료 : {Math.round(recipe.matchRate * 100)}% 매칭</strong>
@@ -145,14 +183,24 @@ function RecipeRecommendPage({ userProfile, recommendationType = "health" }) {
                   </div>
                 )}
 
-                <button
-                  className="recipe-detail-btn"
-                  type="button"
-                  onClick={() => handleOpenDetail(recipe.id)}
-                  disabled={detailLoading}
-                >
-                  자세히 보기
-                </button>
+                <div className="recipe-card-actions">
+                  <button
+                    className="recipe-detail-btn"
+                    type="button"
+                    onClick={() => handleOpenDetail(recipe.id)}
+                    disabled={detailLoading}
+                  >
+                    자세히 보기
+                  </button>
+
+                  <button
+                    className="recipe-predict-btn"
+                    type="button"
+                    onClick={() => handlePredictGlucose(recipe)}
+                  >
+                    혈당 예측
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -189,6 +237,12 @@ function RecipeRecommendPage({ userProfile, recommendationType = "health" }) {
               {selectedRecipe.giLevel && <span>GI {selectedRecipe.giLevel}</span>}
             </div>
 
+            {hasLowNutritionConfidence(selectedRecipe) && (
+              <p className="recipe-nutrition-warning">
+                섭취량 또는 영양값을 확인해주세요
+              </p>
+            )}
+
             <section className="recipe-detail-section">
               <h3>재료</h3>
               {selectedRecipe.ingredients?.length ? (
@@ -221,6 +275,14 @@ function RecipeRecommendPage({ userProfile, recommendationType = "health" }) {
                 <p>등록된 조리방법이 없습니다.</p>
               )}
             </section>
+
+            <button
+              className="recipe-detail-predict-btn"
+              type="button"
+              onClick={() => handlePredictGlucose(selectedRecipe)}
+            >
+              이 레시피로 혈당 예측
+            </button>
           </div>
         </div>
       )}

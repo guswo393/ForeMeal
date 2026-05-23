@@ -90,12 +90,45 @@
   width: 100%;
   height: 190px;
   background-color: #ffffff;
+  position: relative;
+  overflow: hidden;
 }
 
 .glucose-graph {
   width: 100%;
   height: 100%;
   display: block;
+}
+
+.graph-box.empty .glucose-graph {
+  opacity: 0.95;
+}
+
+.graph-empty-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 24px;
+  background: rgba(0, 0, 0, 0.68);
+  color: #ffffff;
+  box-sizing: border-box;
+}
+
+.graph-empty-overlay strong {
+  max-width: 260px;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.graph-empty-overlay span {
+  max-width: 270px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .axis {
@@ -120,6 +153,26 @@
 
 .green {
   stroke: #4c9a3f;
+}
+
+.graph-dot {
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.graph-time-label {
+  fill: #6f7785;
+  font-size: 11px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+
+.blue-dot {
+  fill: #1f5b9e;
+}
+
+.yellow-dot {
+  fill: #f5bf00;
 }
 
 /* 추천 레시피 제목 */
@@ -212,6 +265,15 @@
   font-size: 13px;
   font-weight: 700;
   color: #111111;
+}
+
+.home-nutrition-warning {
+  display: block;
+  margin-top: 5px;
+  color: #b15b00;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
 }
 
 .pantry-match-text {

@@ -146,3 +146,199 @@
   font-size: 16px;
   font-weight: 800;
 }
+
+.glucose-input-form button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.selected-food-card,
+.prediction-result-card,
+.food-search-panel {
+  border: 1px solid #dfe9dd;
+  border-radius: 12px;
+  padding: 14px;
+  background: #f4faf3;
+}
+
+.selected-food-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.selected-food-card span,
+.prediction-result-card p {
+  display: block;
+  margin: 0 0 6px;
+  color: #2a6b35;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.selected-food-card h3,
+.prediction-result-card h3 {
+  margin: 0 0 8px;
+  color: #111111;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.selected-food-card p {
+  margin: 0;
+  color: #555555;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.selected-food-card .nutrition-confidence-warning {
+  margin-top: 8px;
+  color: #b15b00;
+  font-weight: 700;
+}
+
+.glucose-input-form .clear-food-btn {
+  width: 62px;
+  height: 36px;
+  margin-top: 0;
+  border: 1px solid #d5ded4;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #00610a;
+  font-size: 13px;
+}
+
+.food-search-form {
+  display: flex;
+  gap: 8px;
+}
+
+.food-search-form input {
+  flex: 1;
+  height: 44px;
+  border: 1px solid #d6dfd4;
+  border-radius: 10px;
+  padding: 0 12px;
+  background: #ffffff;
+  font-size: 14px;
+}
+
+.food-search-form button {
+  width: 72px;
+  height: 44px;
+  margin-top: 0;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.food-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.food-search-results button {
+  height: auto;
+  margin-top: 0;
+  padding: 10px 12px;
+  border: 1px solid #e0e6de;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #111111;
+  text-align: left;
+}
+
+.food-search-results strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.food-search-results span {
+  color: #666666;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.food-search-results em {
+  display: block;
+  margin-top: 5px;
+  color: #b15b00;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.food-search-empty {
+  margin: 10px 2px 0;
+  color: #666666;
+  font-size: 13px;
+}
+
+.prediction-guide-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid #dfe9dd;
+  border-radius: 12px;
+  padding: 14px;
+  background: #ffffff;
+  color: #444444;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.prediction-guide-card strong {
+  color: #111111;
+  font-size: 15px;
+}
+
+.prediction-guide-card span {
+  color: #666666;
+}
+
+.prediction-empty-card button {
+  align-self: flex-start;
+  width: 92px;
+  height: 38px;
+  margin-top: 6px;
+  border-radius: 9px;
+  font-size: 14px;
+}
+
+.prediction-result-card h3 {
+  font-size: 28px;
+}
+
+.prediction-result-card > span {
+  color: #666666;
+  font-size: 14px;
+}
+
+.prediction-curve {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.prediction-point {
+  padding: 8px 6px;
+  border-radius: 8px;
+  background: #ffffff;
+  text-align: center;
+}
+
+.prediction-point strong {
+  display: block;
+  color: #00610a;
+  font-size: 15px;
+}
+
+.prediction-point span {
+  color: #777777;
+  font-size: 12px;
+}

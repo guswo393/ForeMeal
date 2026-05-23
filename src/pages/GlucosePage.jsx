@@ -1,10 +1,24 @@
 import { useEffect, useState } from "react";
 import "../styles/GlucosePage.css";
 
-function GlucosePage({ userProfile }) {
+const getTodayDateString = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+function GlucosePage({ userProfile, predictionFood, clearPredictionFood }) {
   const [selectedTab, setSelectedTab] = useState("input");
   const [predictionData, setPredictionData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (predictionFood) {
+      setSelectedTab("predict");
+    }
+  }, [predictionFood]);
 
   useEffect(() => {
     const fetchPredictionData = async () => {
@@ -16,7 +30,7 @@ function GlucosePage({ userProfile }) {
           return;
         }
 
-        const today = new Date().toISOString().split("T")[0];
+        const today = getTodayDateString();
         const response = await fetch(`/api/glucose/daily?date=${today}`, {
           headers: {
             Authorization: `Bearer ${userProfile.token}`,
@@ -61,7 +75,7 @@ function GlucosePage({ userProfile }) {
       }
     };
 
-    if (selectedTab !== "input") {
+    if (selectedTab === "daily" || selectedTab === "total") {
       fetchPredictionData();
     } else {
       setLoading(false);
@@ -96,10 +110,24 @@ function GlucosePage({ userProfile }) {
         >
           입력
         </button>
+
+        <button
+          className={selectedTab === "predict" ? "active" : ""}
+          onClick={() => setSelectedTab("predict")}
+        >
+          예측
+        </button>
       </div>
 
       {selectedTab === "input" ? (
         <GlucoseInputForm userProfile={userProfile} />
+      ) : selectedTab === "predict" ? (
+        <GlucosePredictionForm
+          userProfile={userProfile}
+          predictionFood={predictionFood}
+          clearPredictionFood={clearPredictionFood}
+          setSelectedTab={setSelectedTab}
+        />
       ) : loading ? (
         <div>불러오는 중...</div>
       ) : !predictionData ? (
@@ -190,7 +218,7 @@ function GlucoseInputForm({ userProfile }) {
       return;
     }
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayDateString();
     const inputData = {
       measuredAt: `${today}T${time}:00`,
       glucoseValue: Number(glucose),
@@ -273,8 +301,349 @@ function GlucoseInputForm({ userProfile }) {
         </label>
       )}
 
-      <button type="submit">저장</button>
+      <button type="submit">혈당 기록 저장</button>
     </form>
+  );
+}
+
+function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFood, setSelectedTab }) {
+  const [selectedFood, setSelectedFood] = useState(predictionFood);
+  const [foodQuery, setFoodQuery] = useState("");
+  const [foodResults, setFoodResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [foodSearched, setFoodSearched] = useState(false);
+  const [baselineRecord, setBaselineRecord] = useState(null);
+  const [baselineLoading, setBaselineLoading] = useState(false);
+  const [predictionResult, setPredictionResult] = useState(null);
+  const [predicting, setPredicting] = useState(false);
+  const [lastPredictKey, setLastPredictKey] = useState("");
+
+  useEffect(() => {
+    setSelectedFood(predictionFood);
+    setPredictionResult(null);
+    setLastPredictKey("");
+  }, [predictionFood]);
+
+  const normalizeFood = (food) => ({
+    foodId: food.foodId ?? null,
+    recipeId: food.recipeId ?? null,
+    sourceType: food.sourceType ?? "FOOD",
+    name: food.name ?? food.foodName,
+    calories: Number(food.calories ?? 0),
+    carbs: Number(food.carbs ?? 0),
+    sugar: Number(food.sugar ?? 0),
+    sodium: Number(food.sodium ?? 0),
+    nutritionSource: food.nutritionSource ?? null,
+    nutritionConfidence: food.nutritionConfidence ?? null,
+    nutritionWarnings: food.nutritionWarnings ?? [],
+    quantity: 1,
+  });
+
+  const hasLowNutritionConfidence = (food) =>
+    food?.nutritionConfidence != null && Number(food.nutritionConfidence) < 0.7;
+
+  const resolveBaselineRecord = (records) => {
+    if (!records.length) {
+      return null;
+    }
+
+    const now = Date.now();
+    const sorted = records
+      .map((record) => ({
+        ...record,
+        measuredDate: new Date(record.measuredAt),
+      }))
+      .filter((record) => !Number.isNaN(record.measuredDate.getTime()))
+      .sort((a, b) => b.measuredDate.getTime() - a.measuredDate.getTime());
+
+    const similarTimeRecord = sorted.find(
+      (record) => Math.abs(now - record.measuredDate.getTime()) <= 4 * 60 * 60 * 1000
+    );
+
+    return similarTimeRecord ?? sorted[0] ?? null;
+  };
+
+  const formatMeasuredTime = (measuredAt) => {
+    if (!measuredAt) {
+      return "";
+    }
+    return measuredAt.slice(11, 16);
+  };
+
+  useEffect(() => {
+    const fetchBaselineRecord = async () => {
+      if (!userProfile?.token) {
+        setBaselineRecord(null);
+        return;
+      }
+
+      try {
+        setBaselineLoading(true);
+        const today = getTodayDateString();
+        const response = await fetch(`/api/glucose/daily?date=${today}`, {
+          headers: {
+            Authorization: `Bearer ${userProfile.token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        setBaselineRecord(resolveBaselineRecord(data.records ?? []));
+      } catch (error) {
+        console.error("기준 혈당 불러오기 실패:", error);
+        setBaselineRecord(null);
+      } finally {
+        setBaselineLoading(false);
+      }
+    };
+
+    fetchBaselineRecord();
+  }, [userProfile?.token]);
+
+  useEffect(() => {
+    const query = foodQuery.trim();
+    if (!query) {
+      setFoodResults([]);
+      setFoodSearched(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      searchFood(query, false);
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [foodQuery]);
+
+  const searchFood = async (query, markSearched = true) => {
+    try {
+      setSearching(true);
+      const response = await fetch(`/api/v1/predict/foods/search?query=${encodeURIComponent(query)}`, {
+        headers: userProfile?.token
+          ? { Authorization: `Bearer ${userProfile.token}` }
+          : {},
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      setFoodResults(data.slice(0, 8));
+      setFoodSearched(markSearched);
+    } catch (error) {
+      console.error("음식 검색 실패:", error);
+      alert("음식 검색에 실패했습니다.");
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleSearchFood = async (event) => {
+    event.preventDefault();
+
+    if (!foodQuery.trim()) {
+      alert("검색할 음식명을 입력해주세요.");
+      return;
+    }
+
+    await searchFood(foodQuery.trim(), true);
+  };
+
+  const handlePredict = async (currentGlucose) => {
+    if (!userProfile?.token) {
+      alert("로그인 토큰이 없어 예측할 수 없습니다. 다시 로그인해주세요.");
+      return;
+    }
+
+    if (!selectedFood) {
+      alert("예측할 음식을 선택해주세요.");
+      return;
+    }
+
+    try {
+      setPredicting(true);
+      setPredictionResult(null);
+
+      const payload = {
+        currentGlucose: currentGlucose == null ? null : Number(currentGlucose),
+        activityLevel: "normal",
+        foods: [
+          {
+            foodId: selectedFood.foodId ?? null,
+            name: selectedFood.name,
+            calories: Number(selectedFood.calories ?? 0),
+            carbs: Number(selectedFood.carbs ?? 0),
+            sugar: Number(selectedFood.sugar ?? 0),
+            sodium: Number(selectedFood.sodium ?? 0),
+            quantity: 1,
+          },
+        ],
+      };
+
+      const response = await fetch("/api/v1/predict/glucose", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userProfile.token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      setPredictionResult(data);
+    } catch (error) {
+      console.error("혈당 예측 실패:", error);
+      alert("혈당 예측에 실패했습니다. AI 서버 상태를 확인해주세요.");
+    } finally {
+      setPredicting(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!selectedFood || !baselineRecord || predicting) {
+      return;
+    }
+
+    const predictKey = `${selectedFood.sourceType}-${selectedFood.foodId ?? selectedFood.recipeId ?? selectedFood.name}-${baselineRecord.glucoseId}`;
+    if (lastPredictKey === predictKey) {
+      return;
+    }
+
+    setLastPredictKey(predictKey);
+    handlePredict(baselineRecord.glucoseValue);
+  }, [selectedFood, baselineRecord, lastPredictKey, predicting]);
+
+  return (
+    <div className="glucose-input-form">
+      {selectedFood ? (
+        <section className="selected-food-card">
+          <div>
+            <span>예측 음식</span>
+            <h3>{selectedFood.name}</h3>
+            <p>
+              {selectedFood.calories ?? 0} kcal · 탄수화물 {selectedFood.carbs ?? 0}g · 당류 {selectedFood.sugar ?? 0}g · 나트륨 {selectedFood.sodium ?? 0}mg
+            </p>
+            {hasLowNutritionConfidence(selectedFood) && (
+              <p className="nutrition-confidence-warning">
+                섭취량 또는 영양값을 확인해주세요
+              </p>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className="clear-food-btn"
+            onClick={() => {
+              setSelectedFood(null);
+              clearPredictionFood?.();
+              setPredictionResult(null);
+            }}
+          >
+            지우기
+          </button>
+        </section>
+      ) : (
+        <section className="food-search-panel">
+          <form className="food-search-form" onSubmit={handleSearchFood}>
+            <input
+              type="text"
+              value={foodQuery}
+              onChange={(event) => setFoodQuery(event.target.value)}
+              placeholder="음식명 검색"
+            />
+            <button type="submit" disabled={searching}>
+              {searching ? "검색 중" : "검색"}
+            </button>
+          </form>
+
+          <div className="food-search-results">
+            {foodResults.map((food) => (
+              <button
+                type="button"
+                key={`${food.sourceType}-${food.sourceId}`}
+                onClick={() => {
+                  setSelectedFood(normalizeFood(food));
+                  setFoodResults([]);
+                  setFoodSearched(false);
+                  setFoodQuery("");
+                }}
+              >
+                <strong>{food.name}</strong>
+                <span>
+                  {food.sourceType === "RECIPE" ? "레시피" : "식품"} · {food.calories ?? 0} kcal · 탄수화물 {food.carbs ?? 0}g · 당류 {food.sugar ?? 0}g
+                </span>
+                {hasLowNutritionConfidence(food) && (
+                  <em>섭취량 또는 영양값을 확인해주세요</em>
+                )}
+              </button>
+            ))}
+
+            {foodSearched && !foodResults.length && (
+              <p className="food-search-empty">검색된 음식이 없습니다.</p>
+            )}
+          </div>
+        </section>
+      )}
+
+      {selectedFood && baselineLoading && (
+        <section className="prediction-guide-card">
+          오늘 혈당 기록을 확인하고 있어요.
+        </section>
+      )}
+
+      {selectedFood && !baselineLoading && baselineRecord && (
+        <section className="prediction-guide-card">
+          <strong>기준 혈당 {baselineRecord.glucoseValue} mg/dl</strong>
+          <span>{formatMeasuredTime(baselineRecord.measuredAt)} 기록 기준으로 예측했어요.</span>
+        </section>
+      )}
+
+      {selectedFood && !baselineLoading && !baselineRecord && (
+        <section className="prediction-guide-card prediction-empty-card">
+          <strong>혈당을 입력하고 예측 결과를 확인해보세요!</strong>
+          <span>오늘 기록된 혈당이 없어서 식후 혈당 예측에 사용할 기준값이 부족해요.</span>
+          <button
+            type="button"
+            onClick={() => setSelectedTab?.("input")}
+          >
+            입력하기
+          </button>
+        </section>
+      )}
+
+      {predicting && selectedFood && baselineRecord && (
+        <section className="prediction-guide-card">
+          예측 그래프를 만들고 있어요.
+        </section>
+      )}
+
+      {predictionResult && (
+        <section className="prediction-result-card">
+          <p>예상 최고 혈당</p>
+          <h3>{Math.round(predictionResult.predictedPeak)} mg/dl</h3>
+          <span>위험도 {predictionResult.riskLevel}</span>
+
+          {predictionResult.predictionCurve?.length > 0 && (
+            <div className="prediction-curve">
+              {predictionResult.predictionCurve.map((point) => (
+                <div className="prediction-point" key={point.minute}>
+                  <strong>{Math.round(point.glucoseMgdl)}</strong>
+                  <span>{point.minute}분</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+    </div>
   );
 }
 
