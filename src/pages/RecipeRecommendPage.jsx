@@ -17,6 +17,8 @@ function RecipeRecommendPage({
   const pageSubtitle = isPantryRecommendation
     ? "냉장고에 등록된 재료로 만들 수 있는 음식이에요"
     : "혈당 관리를 위한 추천 음식이에요";
+  const hasLowNutritionConfidence = (recipe) =>
+    recipe?.nutritionConfidence != null && Number(recipe.nutritionConfidence) < 0.7;
 
   useEffect(() => {
     fetchRecommendedRecipes();
@@ -74,6 +76,9 @@ function RecipeRecommendPage({
           imageUrl: normalizeImageUrl(recipe.imageUri),
           description: recipe.description,
           giLevel: recipe.giLevel,
+          nutritionSource: recipe.nutritionSource,
+          nutritionConfidence: recipe.nutritionConfidence,
+          nutritionWarnings: recipe.nutritionWarnings ?? [],
           reasons: recipe.reasons ?? [],
           matchRate: recipe.matchRate ?? 0,
           matchedIngredients: recipe.matchedIngredients ?? [],
@@ -124,6 +129,9 @@ function RecipeRecommendPage({
       carbs: Number(readNutrient(recipe.totalNutrients, "carbs") ?? recipe.carbs ?? 0),
       sugar: Number(readNutrient(recipe.totalNutrients, "sugar") ?? recipe.sugar ?? 0),
       sodium: Number(readNutrient(recipe.totalNutrients, "sodium") ?? recipe.sodium ?? 0),
+      nutritionSource: recipe.nutritionSource ?? null,
+      nutritionConfidence: recipe.nutritionConfidence ?? null,
+      nutritionWarnings: recipe.nutritionWarnings ?? [],
       quantity: 1,
     });
     setCurrentPage("glucose");
@@ -157,6 +165,12 @@ function RecipeRecommendPage({
                   {recipe.sodium != null && <span>나트륨 {recipe.sodium}mg</span>}
                   {recipe.giLevel && <span>GI {recipe.giLevel}</span>}
                 </div>
+
+                {hasLowNutritionConfidence(recipe) && (
+                  <p className="recipe-nutrition-warning">
+                    섭취량 또는 영양값을 확인해주세요
+                  </p>
+                )}
 
                 {isPantryRecommendation && (
                   <div className="recipe-match-info">
@@ -222,6 +236,12 @@ function RecipeRecommendPage({
               {selectedRecipe.servings && <span>{selectedRecipe.servings}인분</span>}
               {selectedRecipe.giLevel && <span>GI {selectedRecipe.giLevel}</span>}
             </div>
+
+            {hasLowNutritionConfidence(selectedRecipe) && (
+              <p className="recipe-nutrition-warning">
+                섭취량 또는 영양값을 확인해주세요
+              </p>
+            )}
 
             <section className="recipe-detail-section">
               <h3>재료</h3>

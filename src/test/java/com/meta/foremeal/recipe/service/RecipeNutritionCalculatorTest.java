@@ -45,6 +45,9 @@ class RecipeNutritionCalculatorTest {
         assertThat(result.nutrients()).containsEntry("protein", 12.0);
         assertThat(result.nutrients()).containsEntry("sodium", 78.0);
         assertThat(result.nutrients()).containsEntry("sugar", 10.4);
+        assertThat(result.source()).isEqualTo("MIXED");
+        assertThat(result.confidence()).isGreaterThan(0.0);
+        assertThat(result.warnings()).anyMatch(warning -> warning.contains("추정"));
     }
 
     @Test
@@ -61,6 +64,28 @@ class RecipeNutritionCalculatorTest {
         assertThat(result.nutrients()).containsEntry("carbs", 22.8);
         assertThat(result.nutrients()).containsEntry("sugar", 12.2);
         assertThat(result.nutrients()).containsEntry("sodium", 1.0);
+        assertThat(result.source()).isEqualTo("FOOD_ID_CALCULATED");
+        assertThat(result.confidence()).isEqualTo(0.9);
+    }
+
+    @Test
+    void convertsPieceUnitsWithIngredientAliases() {
+        FoodMasterEntity egg = food(7L, "달걀", 155.0, 1.1, 13.0, 11.0, 1.1, 124.0);
+        when(foodMasterRepository.findByFoodNameContainingIgnoreCase("계란"))
+                .thenReturn(List.of());
+        when(foodMasterRepository.findByFoodNameContainingIgnoreCase("달걀"))
+                .thenReturn(List.of(egg));
+
+        Recipe recipe = recipe("{}");
+        recipe.addIngredient(new RecipeIngredient(null, "계란", new BigDecimal("2"), "개"));
+
+        RecipeNutritionCalculator.Result result = calculator.calculate(recipe);
+
+        assertThat(result.calories()).isEqualByComparingTo("155.0");
+        assertThat(result.nutrients()).containsEntry("protein", 13.0);
+        assertThat(result.nutrients()).containsEntry("sugar", 1.1);
+        assertThat(result.source()).isEqualTo("NAME_ESTIMATED");
+        assertThat(result.warnings()).anyMatch(warning -> warning.contains("평균 중량"));
     }
 
     private Recipe recipe(String nutrients) {

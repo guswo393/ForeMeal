@@ -123,7 +123,10 @@ public class GlucosePredictionService {
                     food.getCalories(),
                     food.getCarbs(),
                     food.getSugar(),
-                    food.getSodium()
+                    food.getSodium(),
+                    "FOOD_MASTER",
+                    1.0,
+                    List.of()
             ));
         }
 
@@ -138,7 +141,10 @@ public class GlucosePredictionService {
                     nutrition.calories() == null ? null : nutrition.calories().doubleValue(),
                     nutrition.nutrients().get("carbs"),
                     nutrition.nutrients().get("sugar"),
-                    nutrition.nutrients().get("sodium")
+                    nutrition.nutrients().get("sodium"),
+                    nutrition.source(),
+                    nutrition.confidence(),
+                    nutrition.warnings()
             ));
         }
 

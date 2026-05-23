@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import "../styles/GlucosePage.css";
 
+const getTodayDateString = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 function GlucosePage({ userProfile, predictionFood, clearPredictionFood }) {
   const [selectedTab, setSelectedTab] = useState("input");
   const [predictionData, setPredictionData] = useState(null);
@@ -22,7 +30,7 @@ function GlucosePage({ userProfile, predictionFood, clearPredictionFood }) {
           return;
         }
 
-        const today = new Date().toISOString().split("T")[0];
+        const today = getTodayDateString();
         const response = await fetch(`/api/glucose/daily?date=${today}`, {
           headers: {
             Authorization: `Bearer ${userProfile.token}`,
@@ -118,6 +126,7 @@ function GlucosePage({ userProfile, predictionFood, clearPredictionFood }) {
           userProfile={userProfile}
           predictionFood={predictionFood}
           clearPredictionFood={clearPredictionFood}
+          setSelectedTab={setSelectedTab}
         />
       ) : loading ? (
         <div>불러오는 중...</div>
@@ -209,7 +218,7 @@ function GlucoseInputForm({ userProfile }) {
       return;
     }
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayDateString();
     const inputData = {
       measuredAt: `${today}T${time}:00`,
       glucoseValue: Number(glucose),
@@ -297,23 +306,22 @@ function GlucoseInputForm({ userProfile }) {
   );
 }
 
-function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFood }) {
+function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFood, setSelectedTab }) {
   const [selectedFood, setSelectedFood] = useState(predictionFood);
   const [foodQuery, setFoodQuery] = useState("");
   const [foodResults, setFoodResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [foodSearched, setFoodSearched] = useState(false);
-  const [glucose, setGlucose] = useState("");
-  const [activityLevel, setActivityLevel] = useState("normal");
-  const [time, setTime] = useState("");
-  const [mealType, setMealType] = useState("식사 전");
-  const [mealHour, setMealHour] = useState("");
+  const [baselineRecord, setBaselineRecord] = useState(null);
+  const [baselineLoading, setBaselineLoading] = useState(false);
   const [predictionResult, setPredictionResult] = useState(null);
   const [predicting, setPredicting] = useState(false);
+  const [lastPredictKey, setLastPredictKey] = useState("");
 
   useEffect(() => {
     setSelectedFood(predictionFood);
     setPredictionResult(null);
+    setLastPredictKey("");
   }, [predictionFood]);
 
   const normalizeFood = (food) => ({
@@ -325,8 +333,75 @@ function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFoo
     carbs: Number(food.carbs ?? 0),
     sugar: Number(food.sugar ?? 0),
     sodium: Number(food.sodium ?? 0),
+    nutritionSource: food.nutritionSource ?? null,
+    nutritionConfidence: food.nutritionConfidence ?? null,
+    nutritionWarnings: food.nutritionWarnings ?? [],
     quantity: 1,
   });
+
+  const hasLowNutritionConfidence = (food) =>
+    food?.nutritionConfidence != null && Number(food.nutritionConfidence) < 0.7;
+
+  const resolveBaselineRecord = (records) => {
+    if (!records.length) {
+      return null;
+    }
+
+    const now = Date.now();
+    const sorted = records
+      .map((record) => ({
+        ...record,
+        measuredDate: new Date(record.measuredAt),
+      }))
+      .filter((record) => !Number.isNaN(record.measuredDate.getTime()))
+      .sort((a, b) => b.measuredDate.getTime() - a.measuredDate.getTime());
+
+    const similarTimeRecord = sorted.find(
+      (record) => Math.abs(now - record.measuredDate.getTime()) <= 4 * 60 * 60 * 1000
+    );
+
+    return similarTimeRecord ?? sorted[0] ?? null;
+  };
+
+  const formatMeasuredTime = (measuredAt) => {
+    if (!measuredAt) {
+      return "";
+    }
+    return measuredAt.slice(11, 16);
+  };
+
+  useEffect(() => {
+    const fetchBaselineRecord = async () => {
+      if (!userProfile?.token) {
+        setBaselineRecord(null);
+        return;
+      }
+
+      try {
+        setBaselineLoading(true);
+        const today = getTodayDateString();
+        const response = await fetch(`/api/glucose/daily?date=${today}`, {
+          headers: {
+            Authorization: `Bearer ${userProfile.token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        setBaselineRecord(resolveBaselineRecord(data.records ?? []));
+      } catch (error) {
+        console.error("기준 혈당 불러오기 실패:", error);
+        setBaselineRecord(null);
+      } finally {
+        setBaselineLoading(false);
+      }
+    };
+
+    fetchBaselineRecord();
+  }, [userProfile?.token]);
 
   useEffect(() => {
     const query = foodQuery.trim();
@@ -378,7 +453,7 @@ function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFoo
     await searchFood(foodQuery.trim(), true);
   };
 
-  const handlePredict = async () => {
+  const handlePredict = async (currentGlucose) => {
     if (!userProfile?.token) {
       alert("로그인 토큰이 없어 예측할 수 없습니다. 다시 로그인해주세요.");
       return;
@@ -394,8 +469,8 @@ function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFoo
       setPredictionResult(null);
 
       const payload = {
-        currentGlucose: glucose ? Number(glucose) : null,
-        activityLevel,
+        currentGlucose: currentGlucose == null ? null : Number(currentGlucose),
+        activityLevel: "normal",
         foods: [
           {
             foodId: selectedFood.foodId ?? null,
@@ -432,6 +507,20 @@ function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFoo
     }
   };
 
+  useEffect(() => {
+    if (!selectedFood || !baselineRecord || predicting) {
+      return;
+    }
+
+    const predictKey = `${selectedFood.sourceType}-${selectedFood.foodId ?? selectedFood.recipeId ?? selectedFood.name}-${baselineRecord.glucoseId}`;
+    if (lastPredictKey === predictKey) {
+      return;
+    }
+
+    setLastPredictKey(predictKey);
+    handlePredict(baselineRecord.glucoseValue);
+  }, [selectedFood, baselineRecord, lastPredictKey, predicting]);
+
   return (
     <div className="glucose-input-form">
       {selectedFood ? (
@@ -442,6 +531,11 @@ function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFoo
             <p>
               {selectedFood.calories ?? 0} kcal · 탄수화물 {selectedFood.carbs ?? 0}g · 당류 {selectedFood.sugar ?? 0}g · 나트륨 {selectedFood.sodium ?? 0}mg
             </p>
+            {hasLowNutritionConfidence(selectedFood) && (
+              <p className="nutrition-confidence-warning">
+                섭취량 또는 영양값을 확인해주세요
+              </p>
+            )}
           </div>
 
           <button
@@ -486,6 +580,9 @@ function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFoo
                 <span>
                   {food.sourceType === "RECIPE" ? "레시피" : "식품"} · {food.calories ?? 0} kcal · 탄수화물 {food.carbs ?? 0}g · 당류 {food.sugar ?? 0}g
                 </span>
+                {hasLowNutritionConfidence(food) && (
+                  <em>섭취량 또는 영양값을 확인해주세요</em>
+                )}
               </button>
             ))}
 
@@ -496,70 +593,37 @@ function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFoo
         </section>
       )}
 
-      <label>
-        혈당
-        <input
-          type="number"
-          value={glucose}
-          onChange={(e) => setGlucose(e.target.value)}
-          placeholder="혈당 수치 입력"
-        />
-      </label>
-
-      <label>
-        활동량
-        <select
-          value={activityLevel}
-          onChange={(e) => setActivityLevel(e.target.value)}
-        >
-          <option value="low">낮음</option>
-          <option value="normal">보통</option>
-          <option value="high">높음</option>
-        </select>
-      </label>
-
-      <label>
-        시간
-        <input
-          type="time"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-        />
-      </label>
-
-      <label>
-        식사 상태
-        <select
-          value={mealType}
-          onChange={(e) => {
-            setMealType(e.target.value);
-
-            if (e.target.value === "공복 혈당") {
-              setMealHour("");
-            }
-          }}
-        >
-          <option>식사 전</option>
-          <option>식사 후</option>
-          <option>공복 혈당</option>
-        </select>
-      </label>
-
-      {mealType !== "공복 혈당" && (
-        <label>
-          식사 시간
-          <input
-            type="number"
-            value={mealHour}
-            onChange={(e) => setMealHour(e.target.value)}
-            placeholder="몇 시간 전/후"
-          />
-        </label>
+      {selectedFood && baselineLoading && (
+        <section className="prediction-guide-card">
+          오늘 혈당 기록을 확인하고 있어요.
+        </section>
       )}
 
-      <button type="button" onClick={handlePredict} disabled={predicting || !selectedFood}>
-        {predicting ? "예측 중..." : "식후 혈당 예측"}
-      </button>
+      {selectedFood && !baselineLoading && baselineRecord && (
+        <section className="prediction-guide-card">
+          <strong>기준 혈당 {baselineRecord.glucoseValue} mg/dl</strong>
+          <span>{formatMeasuredTime(baselineRecord.measuredAt)} 기록 기준으로 예측했어요.</span>
+        </section>
+      )}
+
+      {selectedFood && !baselineLoading && !baselineRecord && (
+        <section className="prediction-guide-card prediction-empty-card">
+          <strong>혈당을 입력하고 예측 결과를 확인해보세요!</strong>
+          <span>오늘 기록된 혈당이 없어서 식후 혈당 예측에 사용할 기준값이 부족해요.</span>
+          <button
+            type="button"
+            onClick={() => setSelectedTab?.("input")}
+          >
+            입력하기
+          </button>
+        </section>
+      )}
+
+      {predicting && selectedFood && baselineRecord && (
+        <section className="prediction-guide-card">
+          예측 그래프를 만들고 있어요.
+        </section>
+      )}
 
       {predictionResult && (
         <section className="prediction-result-card">

@@ -192,6 +192,12 @@
   line-height: 1.45;
 }
 
+.selected-food-card .nutrition-confidence-warning {
+  margin-top: 8px;
+  color: #b15b00;
+  font-weight: 700;
+}
+
 .glucose-input-form .clear-food-btn {
   width: 62px;
   height: 36px;
@@ -257,10 +263,50 @@
   line-height: 1.4;
 }
 
+.food-search-results em {
+  display: block;
+  margin-top: 5px;
+  color: #b15b00;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
 .food-search-empty {
   margin: 10px 2px 0;
   color: #666666;
   font-size: 13px;
+}
+
+.prediction-guide-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid #dfe9dd;
+  border-radius: 12px;
+  padding: 14px;
+  background: #ffffff;
+  color: #444444;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.prediction-guide-card strong {
+  color: #111111;
+  font-size: 15px;
+}
+
+.prediction-guide-card span {
+  color: #666666;
+}
+
+.prediction-empty-card button {
+  align-self: flex-start;
+  width: 92px;
+  height: 38px;
+  margin-top: 6px;
+  border-radius: 9px;
+  font-size: 14px;
 }
 
 .prediction-result-card h3 {

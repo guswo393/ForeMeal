@@ -78,6 +78,7 @@ function HomePage({ userProfile, setCurrentPage, setRecipeRecommendType }) {
         sugar: readNutrient(recipe.totalNutrients, "sugar"),
         sodium: readNutrient(recipe.totalNutrients, "sodium"),
         image: normalizeImageUrl(recipe.imageUri),
+        nutritionConfidence: recipe.nutritionConfidence,
         matchRate: recipe.matchRate,
         matchedIngredients: recipe.matchedIngredients ?? [],
       }));
@@ -190,6 +191,9 @@ function HomePage({ userProfile, setCurrentPage, setRecipeRecommendType }) {
 }
 
 function RecipeSection({ title, recipes, showPantryMatch = false, onOpen }) {
+  const hasLowNutritionConfidence = (recipe) =>
+    recipe?.nutritionConfidence != null && Number(recipe.nutritionConfidence) < 0.7;
+
   return (
     <section className="section recipe-section">
       <div className="section-title-row">
@@ -232,6 +236,12 @@ function RecipeSection({ title, recipes, showPantryMatch = false, onOpen }) {
             <strong>
               당류 {recipe.sugar ?? "-"}g, 나트륨 {recipe.sodium ?? "-"}mg
             </strong>
+
+            {hasLowNutritionConfidence(recipe) && (
+              <span className="home-nutrition-warning">
+                섭취량 또는 영양값을 확인해주세요
+              </span>
+            )}
           </button>
         ))}
 
