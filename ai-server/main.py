@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 
-MODEL_VERSION = "rule-based-v1"
+MODEL_VERSION = "rule-based-v1-glucose"
 
 app = FastAPI(title="ForeMeal Prediction API")
 
@@ -30,8 +30,6 @@ class PredictionRequest(BaseModel):
     mealId: int | None = None
     foodId: int | None = None
     currentGlucose: float | None = Field(default=None, description="mg/dL")
-    systolicBp: int | None = None
-    diastolicBp: int | None = None
     activityLevel: str | None = "normal"
     foods: list[FoodItem] = Field(default_factory=list)
 
@@ -49,6 +47,7 @@ def db_config() -> dict[str, Any]:
 @contextmanager
 def db_connection():
     conn = psycopg2.connect(**db_config())
+
     try:
         yield conn
         conn.commit()
@@ -76,24 +75,59 @@ def get_health_profile(conn, user_id: int) -> dict[str, Any]:
 
 
 def activity_factor(activity_level: str | None) -> float:
-    value = (activity_level or "").lower()
-    if value in {"high", "active", "many", "많음", "높음"}:
-        return -12
-    if value in {"low", "sedentary", "little", "적음", "낮음"}:
-        return 8
-    return 0
+    value = (activity_level or "normal").lower()
+
+    if value in {"high", "active", "many"}:
+        return -12.0
+
+    if value in {"low", "sedentary", "little"}:
+        return 8.0
+
+    return 0.0
 
 
-def risk_level(glucose_peak: float, systolic: int, diastolic: int) -> str:
-    if glucose_peak >= 200 or systolic >= 140 or diastolic >= 90:
-        return "위험"
-    if glucose_peak >= 140 or systolic >= 130 or diastolic >= 80:
-        return "주의"
-    return "정상"
+def sugar_ratio_factor(total_carbs: float, total_sugar: float) -> float:
+    if total_carbs <= 0:
+        return 1.0
+
+    ratio = total_sugar / total_carbs
+
+    if ratio >= 0.5:
+        return 1.2
+
+    if ratio >= 0.2:
+        return 1.1
+
+    return 1.0
+
+
+def glucose_sensitivity_factor(base_glucose: float, profile: dict[str, Any]) -> float:
+    has_diabetes = bool(profile.get("has_diabetes", False))
+
+    if has_diabetes:
+        carb_factor = 1.6
+    else:
+        carb_factor = 1.2
+
+    if base_glucose >= 180:
+        return carb_factor * 1.1
+
+    return carb_factor
+
+
+def glucose_risk_level(predicted_peak: float) -> str:
+    if predicted_peak >= 180:
+        return "HIGH"
+
+    if predicted_peak >= 140:
+        return "CAUTION"
+
+    return "NORMAL"
 
 
 def predict(request: PredictionRequest, profile: dict[str, Any]) -> dict[str, Any]:
     foods = request.foods or []
+
     total_carbs = sum(number(food.carbs, 0) * number(food.quantity, 1) for food in foods)
     total_sugar = sum(number(food.sugar, 0) * number(food.quantity, 1) for food in foods)
     total_sodium = sum(number(food.sodium, 0) * number(food.quantity, 1) for food in foods)
@@ -102,44 +136,56 @@ def predict(request: PredictionRequest, profile: dict[str, Any]) -> dict[str, An
         request.currentGlucose,
         number(profile.get("fasting_glucose"), number(profile.get("glucose"), 100)),
     )
-    base_systolic = int(number(request.systolicBp, number(profile.get("systolic_bp"), 120)))
-    base_diastolic = int(number(request.diastolicBp, number(profile.get("diastolic_bp"), 80)))
 
-    insulin_sensitivity = number(profile.get("insulin_sensitivity"), 1.0)
-    glucose_delta = (total_carbs * 1.15 + total_sugar * 0.75) / max(insulin_sensitivity, 0.5)
-    peak = round(base_glucose + glucose_delta + activity_factor(request.activityLevel), 1)
-    pred_1h = int(round(base_glucose + glucose_delta * 0.82 + activity_factor(request.activityLevel)))
+    carb_factor = glucose_sensitivity_factor(base_glucose, profile)
+    sugar_factor = sugar_ratio_factor(total_carbs, total_sugar)
+    activity_adjustment = activity_factor(request.activityLevel)
 
-    systolic = int(round(base_systolic + min(total_sodium / 700, 8)))
-    diastolic = int(round(base_diastolic + min(total_sodium / 1200, 5)))
+    glucose_delta = total_carbs * carb_factor * sugar_factor
+
+    peak = round(base_glucose + glucose_delta + activity_adjustment, 1)
+    pred_1h = int(round(base_glucose + glucose_delta * 0.85 + activity_adjustment))
+
+    risk = glucose_risk_level(peak)
 
     curve = []
-    for minute, ratio in [(0, 0), (30, 0.55), (60, 0.82), (90, 1.0), (120, 0.72), (180, 0.35)]:
+
+    for minute, ratio in [
+        (0, 0.0),
+        (30, 0.55),
+        (60, 0.85),
+        (90, 1.0),
+        (120, 0.65),
+        (180, 0.25),
+    ]:
         glucose = round(base_glucose + (peak - base_glucose) * ratio, 1)
+
         curve.append({
             "minute": minute,
             "glucoseMgdl": glucose,
-            "systolicBp": int(round(base_systolic + (systolic - base_systolic) * ratio)),
-            "diastolicBp": int(round(base_diastolic + (diastolic - base_diastolic) * ratio)),
         })
+
+    food_name = foods[0].name if foods and foods[0].name else "이 음식"
 
     return {
         "modelVersion": MODEL_VERSION,
+        "baseGlucose": base_glucose,
         "pred1hMgdl": pred_1h,
         "predictedPeak": peak,
-        "predictedSystolicBp": systolic,
-        "predictedDiastolicBp": diastolic,
-        "riskLevel": risk_level(peak, systolic, diastolic),
+        "riskLevel": risk,
         "predictionCurve": curve,
         "evidenceSummary": (
+            f"현재 기준 혈당 {base_glucose:.0f}에서 {food_name}을 먹으면 "
+            f"식후 혈당이 최대 {peak:.0f} mg/dL까지 오를 수 있어요. "
             f"탄수화물 {total_carbs:.1f}g, 당류 {total_sugar:.1f}g, "
-            f"나트륨 {total_sodium:.1f}mg 기준 예측"
+            f"나트륨 {total_sodium:.1f}mg, 활동량 {request.activityLevel or 'normal'} 기준입니다."
         ),
     }
 
 
 def save_prediction(conn, request: PredictionRequest, result: dict[str, Any]) -> tuple[int, int]:
     food_id = request.foodId
+
     if food_id is None and request.foods:
         food_id = request.foods[0].foodId
 
@@ -160,14 +206,12 @@ def save_prediction(conn, request: PredictionRequest, result: dict[str, Any]) ->
                 result["riskLevel"],
             ),
         )
+
         prediction_id = cur.fetchone()[0]
 
         curve_data = {
             "generatedAt": datetime.now(timezone.utc).isoformat(),
-            "bloodPressure": {
-                "systolic": result["predictedSystolicBp"],
-                "diastolic": result["predictedDiastolicBp"],
-            },
+            "baseGlucose": result["baseGlucose"],
             "curve": result["predictionCurve"],
             "evidenceSummary": result["evidenceSummary"],
         }
@@ -188,6 +232,7 @@ def save_prediction(conn, request: PredictionRequest, result: dict[str, Any]) ->
                 food_id,
             ),
         )
+
         daily_summary_id = cur.fetchone()[0]
 
     return prediction_id, daily_summary_id
@@ -195,7 +240,23 @@ def save_prediction(conn, request: PredictionRequest, result: dict[str, Any]) ->
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "modelVersion": MODEL_VERSION}
+    return {
+        "status": "ok",
+        "modelVersion": MODEL_VERSION,
+    }
+
+
+@app.post("/predict")
+def predict_only(request: PredictionRequest):
+    profile = {}
+
+    try:
+        with db_connection() as conn:
+            profile = get_health_profile(conn, request.userId)
+    except psycopg2.Error:
+        profile = {}
+
+    return predict(request, profile)
 
 
 @app.post("/predict/glucose")
