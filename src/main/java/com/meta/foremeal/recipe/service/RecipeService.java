@@ -325,8 +325,8 @@ public class RecipeService {
 
         int totalIngredients = matchedIngredients.size() + missingIngredients.size();
         double matchRate = totalIngredients == 0 ? 0.0 : (double) matchedIngredients.size() / totalIngredients;
-        HealthScore healthScore = calculateHealthScore(recipe, healthContext);
         RecipeNutritionCalculator.Result nutrition = nutritionCalculator.calculate(recipe);
+        HealthScore healthScore = calculateHealthScore(recipe, healthContext, nutrition);
 
         return new RecipeDto.RecommendationResponse(
                 recipe.getRecipeId(),
@@ -426,18 +426,7 @@ public class RecipeService {
             return false;
         }
 
-        return pantryNames.stream()
-                .anyMatch(pantryName -> {
-                    if (pantryName.equals(ingredientName)) {
-                        return true;
-                    }
-
-                    if (pantryName.length() < 2 || ingredientName.length() < 2) {
-                        return false;
-                    }
-
-                    return pantryName.contains(ingredientName) || ingredientName.contains(pantryName);
-                });
+        return pantryNames.contains(ingredientName);
     }
 
     private HealthContext loadHealthContext(Long userId) {
@@ -469,10 +458,13 @@ public class RecipeService {
         );
     }
 
-    private HealthScore calculateHealthScore(Recipe recipe, HealthContext context) {
+    private HealthScore calculateHealthScore(
+            Recipe recipe,
+            HealthContext context,
+            RecipeNutritionCalculator.Result nutrition
+    ) {
         double score = 70.0;
         List<String> reasons = new ArrayList<>();
-        RecipeNutritionCalculator.Result nutrition = nutritionCalculator.calculate(recipe);
 
         double calories = nutrition.calories() == null ? 0.0 : nutrition.calories().doubleValue();
         double carbs = nutrition.nutrients().getOrDefault("carbs", 0.0);

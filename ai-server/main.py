@@ -125,6 +125,7 @@ def predict(request: PredictionRequest, profile: dict[str, Any]) -> dict[str, An
 
     return {
         "modelVersion": MODEL_VERSION,
+        "baseGlucose": base_glucose,
         "pred1hMgdl": pred_1h,
         "predictedPeak": peak,
         "predictedSystolicBp": systolic,

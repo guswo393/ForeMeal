@@ -150,6 +150,57 @@ public class RecipeServiceTest {
         assertThat(responses.get(0).matchRate()).isEqualTo(0.5);
     }
 
+    @Test
+    void doesNotMatchPantryItemByPartialIngredientName() {
+        PantryItem pantryItem = PantryItem.builder()
+                .userId(7L)
+                .displayName("두부")
+                .build();
+
+        Recipe softTofuRecipe = new Recipe(
+                "버섯구이와 두부타르타르 소스",
+                "비슷한 단어가 들어가지만 다른 재료를 쓰는 레시피",
+                "반찬",
+                "구이",
+                "EASY",
+                15,
+                1,
+                new BigDecimal("150"),
+                "{}",
+                "LOW",
+                null
+        );
+        softTofuRecipe.addIngredient(new RecipeIngredient(null, "연두부", BigDecimal.ONE, "개"));
+
+        Recipe tofuRecipe = new Recipe(
+                "두부 샐러드",
+                "냉장고 두부로 만드는 레시피",
+                "샐러드",
+                "무침",
+                "EASY",
+                10,
+                1,
+                new BigDecimal("180"),
+                "{}",
+                "LOW",
+                null
+        );
+        tofuRecipe.addIngredient(new RecipeIngredient(null, "두부", BigDecimal.ONE, "모"));
+
+        when(pantryItemRepository.findAllByUserIdWithFoodMaster(7L)).thenReturn(List.of(pantryItem));
+        when(healthProfileRepository.findByUserId(7L)).thenReturn(Optional.empty());
+        when(summaryRepository.findByUserIdAndSummaryDate(eq(7L), any())).thenReturn(Optional.empty());
+        when(glucoseRepository.findByUserIdAndMeasuredAtBetweenOrderByMeasuredAtAsc(eq(7L), any(), any()))
+                .thenReturn(List.of());
+        when(recipeRepository.findAllWithIngredients()).thenReturn(List.of(softTofuRecipe, tofuRecipe));
+
+        List<RecipeDto.RecommendationResponse> responses = recipeService.recommendByPantry(7L, 10);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).title()).isEqualTo("두부 샐러드");
+        assertThat(responses.get(0).matchedIngredients()).containsExactly("두부");
+    }
+
     private RecipeDto.CreateRequest createRequest(String title, String category, String dishType,
                                                   String difficulty, Integer cookingTime) {
         return new RecipeDto.CreateRequest(

@@ -1,4 +1,5 @@
 import os
+import base64
 from collections import defaultdict
 from io import BytesIO
 
@@ -10,10 +11,15 @@ from app.schemas import DetectedItem
 MODEL_NAME = os.getenv("YOLO_MODEL", "yolo11n.pt")
 FALLBACK_MODEL_NAME = os.getenv("YOLO_FALLBACK_MODEL", "yolo11n.pt")
 FALLBACK_ENABLED = os.getenv("YOLO_FALLBACK_ENABLED", "true").lower() == "true"
+DEMO_MODE = os.getenv("PANTRY_DEMO_MODE", "false").lower() == "true"
 CONFIDENCE_THRESHOLD = float(os.getenv("YOLO_CONFIDENCE", "0.50"))
 FALLBACK_CONFIDENCE_THRESHOLD = float(os.getenv("YOLO_FALLBACK_CONFIDENCE", "0.25"))
 
 _models = {}
+
+
+def is_demo_mode() -> bool:
+    return DEMO_MODE
 
 
 def _get_model(model_name: str):
@@ -25,6 +31,13 @@ def _get_model(model_name: str):
 
 
 def _load_image(image_url: str) -> Image.Image:
+    if image_url.startswith("data:image/"):
+        try:
+            _, encoded = image_url.split(",", 1)
+            return Image.open(BytesIO(base64.b64decode(encoded))).convert("RGB")
+        except Exception as exc:
+            raise ValueError("Invalid image data URL.") from exc
+
     response = requests.get(
         image_url,
         headers={"User-Agent": "ForeMeal-AI/0.1"},
@@ -59,6 +72,13 @@ def _predict(image: Image.Image, model_name: str, confidence_threshold: float) -
 
 
 def detect_items(image_url: str) -> list[DetectedItem]:
+    if DEMO_MODE:
+        return [
+            DetectedItem(name="tomatoes", confidence=0.94),
+            DetectedItem(name="tofu", confidence=0.91),
+            DetectedItem(name="milk", confidence=0.89),
+        ]
+
     image = _load_image(image_url)
     items = _predict(image, MODEL_NAME, CONFIDENCE_THRESHOLD)
 

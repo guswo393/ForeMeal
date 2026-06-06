@@ -315,6 +315,13 @@ function RefrigeratorPage({ userProfile }) {
                   <option value="ml">ml</option>
                 </select>
               </div>
+
+              <input
+                type="date"
+                value={item.expirationDate}
+                onChange={(event) => updateScanItem(index, "expirationDate", event.target.value)}
+                aria-label="유통기한"
+              />
             </div>
           ))}
 

@@ -300,6 +300,43 @@
   cursor: pointer;
 }
 
+.home-recipe-skeleton {
+  flex: 0 0 178px;
+  height: 268px;
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent),
+    linear-gradient(#eeeeee 0 0),
+    linear-gradient(#f2f2f2 0 0),
+    linear-gradient(#f2f2f2 0 0),
+    linear-gradient(#f5f5f5 0 0);
+  background-size:
+    90px 100%,
+    178px 178px,
+    130px 14px,
+    160px 18px,
+    120px 13px;
+  background-position:
+    -100px 0,
+    0 0,
+    0 192px,
+    0 216px,
+    0 250px;
+  background-repeat: no-repeat;
+  animation: recipe-skeleton-shimmer 1.1s ease-in-out infinite;
+}
+
+@keyframes recipe-skeleton-shimmer {
+  to {
+    background-position:
+      220px 0,
+      0 0,
+      0 192px,
+      0 216px,
+      0 250px;
+  }
+}
+
 /* 모바일 화면 대응 */
 @media (max-width: 430px) {
   .home-page {
@@ -318,5 +355,15 @@
   .home-recipe-card img {
     width: 100%;
     height: 170px;
+  }
+
+  .home-recipe-skeleton {
+    flex-basis: 170px;
+    background-size:
+      90px 100%,
+      170px 170px,
+      124px 14px,
+      154px 18px,
+      116px 13px;
   }
 }
