@@ -111,8 +111,12 @@ function HomePage({ userProfile, setCurrentPage, setRecipeRecommendType }) {
 
   const [recipes, setRecipes] = useState([]);
   const [pantryRecipes, setPantryRecipes] = useState([]);
+  const [recipesLoading, setRecipesLoading] = useState(false);
+  const [pantryRecipesLoading, setPantryRecipesLoading] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchGraphData = async () => {
       if (!userProfile?.token) {
         setGraphData(DEFAULT_GRAPH_DATA);
@@ -148,14 +152,23 @@ function HomePage({ userProfile, setCurrentPage, setRecipeRecommendType }) {
           predictionItems = readCurveValues(predictionData?.[0]);
         }
 
-        setGraphData(buildGraphData(actualItems, predictionItems));
+        if (!cancelled) {
+          setGraphData(buildGraphData(actualItems, predictionItems));
+        }
       } catch (error) {
         console.error("홈 혈당 그래프 불러오기 실패:", error);
-        setGraphData(DEFAULT_GRAPH_DATA);
+        if (!cancelled) {
+          setGraphData(DEFAULT_GRAPH_DATA);
+        }
       }
     };
 
-    fetchGraphData();
+    const timer = window.setTimeout(fetchGraphData, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [userProfile?.token]);
 
   useEffect(() => {
@@ -174,36 +187,6 @@ function HomePage({ userProfile, setCurrentPage, setRecipeRecommendType }) {
       } catch {
         return null;
       }
-    };
-
-    const fetchRecipeDetails = async (recipes) => {
-      return Promise.all(
-        recipes.map(async (recipe) => {
-          try {
-            const detailResponse = await fetch(`/api/recipes/${recipe.recipeId}`, {
-              headers: {
-                Authorization: `Bearer ${userProfile.token}`,
-              },
-            });
-
-            if (!detailResponse.ok) {
-              throw new Error(`HTTP ${detailResponse.status}`);
-            }
-
-            const detail = await detailResponse.json();
-            return {
-              ...detail,
-              matchedIngredientCount: recipe.matchedIngredientCount,
-              missingIngredientCount: recipe.missingIngredientCount,
-              matchRate: recipe.matchRate,
-              matchedIngredients: recipe.matchedIngredients ?? [],
-            };
-          } catch (error) {
-            console.error("홈 추천 레시피 상세 불러오기 실패:", error);
-            return recipe;
-          }
-        })
-      );
     };
 
     const mapRecipeCards = (recipes) =>
@@ -231,34 +214,42 @@ function HomePage({ userProfile, setCurrentPage, setRecipeRecommendType }) {
           Authorization: `Bearer ${userProfile.token}`,
         };
 
-        const [healthResponse, pantryResponse] = await Promise.all([
-          fetch(`/api/recipes/recommendations/health?userId=${userProfile.userId}&limit=5`, { headers }),
-          fetch(`/api/recipes/recommendations/pantry?userId=${userProfile.userId}&limit=5`, { headers }),
-        ]);
+        setRecipesLoading(true);
+        setPantryRecipesLoading(true);
 
-        if (!healthResponse.ok) {
-          throw new Error(`health HTTP ${healthResponse.status}`);
-        }
+        fetch(`/api/recipes/recommendations/health?userId=${userProfile.userId}&limit=5`, { headers })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`health HTTP ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => setRecipes(mapRecipeCards(data)))
+          .catch((error) => {
+            console.error("홈 건강 추천 레시피 불러오기 실패:", error);
+            setRecipes([]);
+          })
+          .finally(() => setRecipesLoading(false));
 
-        if (!pantryResponse.ok) {
-          throw new Error(`pantry HTTP ${pantryResponse.status}`);
-        }
-
-        const [healthData, pantryData] = await Promise.all([
-          healthResponse.json(),
-          pantryResponse.json(),
-        ]);
-        const [detailedHealthRecipes, detailedPantryRecipes] = await Promise.all([
-          fetchRecipeDetails(healthData),
-          fetchRecipeDetails(pantryData),
-        ]);
-
-        setRecipes(mapRecipeCards(detailedHealthRecipes));
-        setPantryRecipes(mapRecipeCards(detailedPantryRecipes));
+        fetch(`/api/recipes/recommendations/pantry?userId=${userProfile.userId}&limit=5`, { headers })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`pantry HTTP ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => setPantryRecipes(mapRecipeCards(data)))
+          .catch((error) => {
+            console.error("홈 냉장고 추천 레시피 불러오기 실패:", error);
+            setPantryRecipes([]);
+          })
+          .finally(() => setPantryRecipesLoading(false));
       } catch (error) {
         console.error("홈 추천 레시피 불러오기 실패:", error);
         setRecipes([]);
         setPantryRecipes([]);
+        setRecipesLoading(false);
+        setPantryRecipesLoading(false);
       }
     };
 
@@ -354,6 +345,7 @@ function HomePage({ userProfile, setCurrentPage, setRecipeRecommendType }) {
       <RecipeSection
         title="오늘의 추천 레시피"
         recipes={recipes}
+        loading={recipesLoading}
         onOpen={() => {
           setRecipeRecommendType("health");
           setCurrentPage("recipeRecommend");
@@ -363,6 +355,7 @@ function HomePage({ userProfile, setCurrentPage, setRecipeRecommendType }) {
       <RecipeSection
         title="내 재료로 만드는 레시피"
         recipes={pantryRecipes}
+        loading={pantryRecipesLoading}
         showPantryMatch
         onOpen={() => {
           setRecipeRecommendType("pantry");
@@ -373,7 +366,7 @@ function HomePage({ userProfile, setCurrentPage, setRecipeRecommendType }) {
   );
 }
 
-function RecipeSection({ title, recipes, showPantryMatch = false, onOpen }) {
+function RecipeSection({ title, recipes, loading = false, showPantryMatch = false, onOpen }) {
   const hasLowNutritionConfidence = (recipe) =>
     recipe?.nutritionConfidence != null && Number(recipe.nutritionConfidence) < 0.7;
 
@@ -392,6 +385,13 @@ function RecipeSection({ title, recipes, showPantryMatch = false, onOpen }) {
       </div>
 
       <div className="home-recipe-list">
+        {loading && !recipes.length && (
+          <>
+            <div className="home-recipe-skeleton" />
+            <div className="home-recipe-skeleton" />
+          </>
+        )}
+
         {recipes.map((recipe) => (
           <button
             className="home-recipe-card"
@@ -428,7 +428,7 @@ function RecipeSection({ title, recipes, showPantryMatch = false, onOpen }) {
           </button>
         ))}
 
-        {!recipes.length && (
+        {!loading && !recipes.length && (
           <button
             className="empty-recipe-card"
             type="button"

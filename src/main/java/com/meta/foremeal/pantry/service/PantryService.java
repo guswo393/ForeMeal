@@ -58,7 +58,7 @@ public class PantryService {
 
         PantryScan pantryScan = PantryScan.builder()
                 .user(user)
-                .imageUrl(imageUrl)
+                .imageUrl(toStoredImageReference(imageUrl))
                 .status("PROCESSING")
                 .createdAt(LocalDateTime.now())
                 .scannedAt(LocalDateTime.now())
@@ -97,9 +97,16 @@ public class PantryService {
                     .collect(Collectors.toList());
         } catch (Exception e) {
             pantryScan.updateScanResult("FAILED", null, e.getMessage());
-            log.error("Pantry scan failed. userId={}, imageUrl={}", userId, imageUrl, e);
+            log.error("Pantry scan failed. userId={}, imageRef={}", userId, pantryScan.getImageUrl(), e);
             throw new IllegalStateException("AI scan failed: " + e.getMessage(), e);
         }
+    }
+
+    private String toStoredImageReference(String imageUrl) {
+        if (imageUrl != null && imageUrl.startsWith("data:image/")) {
+            return "uploaded-image";
+        }
+        return imageUrl;
     }
 
     private PantryScanItemResponse toScanItemResponse(Long scanId, DetectedPantryItem detectedItem) {
@@ -107,8 +114,9 @@ public class PantryService {
         IngredientAlias alias = ingredientAliasRepository
                 .findFirstByDetectedNameIgnoreCaseAndEnabledTrueOrderByAliasIdAsc(detectedName)
                 .orElse(null);
-        String searchKeyword = alias != null ? alias.getSearchKeyword() : detectedName;
-        String displayName = alias != null ? alias.getDisplayName() : detectedName;
+        String fallbackDisplayName = fallbackDisplayName(detectedName);
+        String searchKeyword = alias != null ? alias.getSearchKeyword() : fallbackDisplayName;
+        String displayName = alias != null ? alias.getDisplayName() : fallbackDisplayName;
 
         FoodMasterEntity matchedFood = alias != null && alias.getFoodMaster() != null
                 ? alias.getFoodMaster()
@@ -136,6 +144,13 @@ public class PantryService {
                 detectedItem.getConfidence(),
                 true
         );
+    }
+
+    private String fallbackDisplayName(String detectedName) {
+        if ("tofu".equalsIgnoreCase(detectedName)) {
+            return "두부";
+        }
+        return detectedName;
     }
 
     @Transactional

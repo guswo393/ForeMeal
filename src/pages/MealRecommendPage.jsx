@@ -10,7 +10,7 @@ function MealRecommendPage({ setCurrentPage, setRecipeRecommendType }) {
     },
     {
       id: 2,
-      title: "외식, 배달",
+      title: "외식 가이드",
       image: "/images/delivery.jpg",
       page: "delivery",
     },

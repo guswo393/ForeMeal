@@ -31,6 +31,11 @@ public class RecipeNutritionCalculator {
 
     public Result calculate(Recipe recipe) {
         Map<String, Double> nutrients = parseNutrients(recipe.getTotalNutrients());
+        BigDecimal calories = recipe.getTotalCalories();
+        if (hasUsableOriginalNutrition(nutrients, calories)) {
+            return new Result(calories, toJson(nutrients), nutrients, Source.ORIGINAL.name(), 0.85, List.of());
+        }
+
         Estimation estimation = estimateNutrientsFromIngredients(recipe);
         Map<String, Double> estimated = estimation.nutrients();
         List<String> warnings = new ArrayList<>(estimation.warnings());
@@ -45,7 +50,6 @@ public class RecipeNutritionCalculator {
         usedEstimated = estimated.entrySet().stream()
                 .anyMatch(entry -> entry.getValue() != null && entry.getValue() > 0.0);
 
-        BigDecimal calories = recipe.getTotalCalories();
         if ((calories == null || calories.signum() <= 0) && estimated.containsKey("calories")) {
             calories = BigDecimal.valueOf(estimated.get("calories"));
             usedEstimated = true;
@@ -92,6 +96,14 @@ public class RecipeNutritionCalculator {
         }
 
         return nutrients;
+    }
+
+    private boolean hasUsableOriginalNutrition(Map<String, Double> nutrients, BigDecimal calories) {
+        return calories != null
+                && calories.signum() > 0
+                && nutrients.containsKey("carbs")
+                && nutrients.containsKey("sugar")
+                && nutrients.containsKey("sodium");
     }
 
     private void addNutrient(Map<String, Double> nutrients, String targetKey, JsonNode node, String... sourceKeys) {

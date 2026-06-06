@@ -315,12 +315,14 @@ function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFoo
   const [baselineRecord, setBaselineRecord] = useState(null);
   const [baselineLoading, setBaselineLoading] = useState(false);
   const [predictionResult, setPredictionResult] = useState(null);
+  const [predictionError, setPredictionError] = useState("");
   const [predicting, setPredicting] = useState(false);
   const [lastPredictKey, setLastPredictKey] = useState("");
 
   useEffect(() => {
     setSelectedFood(predictionFood);
     setPredictionResult(null);
+    setPredictionError("");
     setLastPredictKey("");
   }, [predictionFood]);
 
@@ -486,6 +488,7 @@ function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFoo
     try {
       setPredicting(true);
       setPredictionResult(null);
+      setPredictionError("");
 
       const payload = {
         currentGlucose: currentGlucose == null ? null : Number(currentGlucose),
@@ -520,7 +523,7 @@ function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFoo
       setPredictionResult(data);
     } catch (error) {
       console.error("혈당 예측 실패:", error);
-      alert("혈당 예측에 실패했습니다. AI 서버 상태를 확인해주세요.");
+      setPredictionError("혈당 예측에 실패했습니다. AI 서버와 Spring Boot 상태를 확인해주세요.");
     } finally {
       setPredicting(false);
     }
@@ -626,6 +629,13 @@ function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFoo
             <span>
       {baselineRecord.baselineReason} 기준으로, 이 음식을 먹었을 때의 식후 혈당 변화를 예측해요.
     </span>
+            <button
+                type="button"
+                onClick={() => handlePredict(baselineRecord.glucoseValue)}
+                disabled={predicting}
+            >
+              {predicting ? "예측 중" : "예측 다시 실행"}
+            </button>
           </section>
       )}
 
@@ -647,6 +657,21 @@ function GlucosePredictionForm({ userProfile, predictionFood, clearPredictionFoo
       {predicting && selectedFood && baselineRecord && (
         <section className="prediction-guide-card">
           예측 그래프를 만들고 있어요.
+        </section>
+      )}
+
+      {predictionError && !predicting && (
+        <section className="prediction-guide-card prediction-empty-card">
+          <strong>예측 결과를 불러오지 못했어요.</strong>
+          <span>{predictionError}</span>
+          {baselineRecord && (
+            <button
+              type="button"
+              onClick={() => handlePredict(baselineRecord.glucoseValue)}
+            >
+              다시 시도
+            </button>
+          )}
         </section>
       )}
 
